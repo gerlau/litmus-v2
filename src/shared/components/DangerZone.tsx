@@ -4,9 +4,10 @@ import { useState } from 'react';
 
 interface DangerZoneProps {
   label: string;
+  onDelete?: () => void;
 }
 
-export default function DangerZone({ label }: DangerZoneProps) {
+export default function DangerZone({ label, onDelete }: DangerZoneProps) {
   const [val, setVal] = useState('');
   const armed = val === 'DELETE';
 
@@ -33,6 +34,7 @@ export default function DangerZone({ label }: DangerZoneProps) {
       />
       <button
         disabled={!armed}
+        onClick={() => { if (armed && onDelete) onDelete(); }}
         className="w-full py-3.5 rounded-[10px] text-[12.5px] font-semibold uppercase tracking-widest"
         style={armed
           ? { background: 'var(--danger)', color: '#fff', border: 0, cursor: 'pointer' }

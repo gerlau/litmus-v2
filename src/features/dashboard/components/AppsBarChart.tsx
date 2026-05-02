@@ -1,16 +1,27 @@
 'use client';
 
-import { APPS } from '@/shared/utils/data';
+import type { App, Risk, Finding } from '@/shared/types/domain';
 import { Icons } from '@/shared/components/Icon';
 
 interface Props {
+  apps: App[];
+  risks: Risk[];
+  findings: Finding[];
   selectedApp: string;
   onSelect: (id: string) => void;
 }
 
-export default function AppsBarChart({ selectedApp, onSelect }: Props) {
-  const sorted = [...APPS].sort((a, b) => b.atRisk - a.atRisk);
-  const max = Math.max(...APPS.map(a => a.risks));
+export default function AppsBarChart({ apps, risks, findings, selectedApp, onSelect }: Props) {
+  const totalRisks = risks.length;
+
+  const appsWithStats = apps.map(a => {
+    const appFindings = findings.filter(f => f.appId === a.id);
+    const atRisk = appFindings.filter(f => f.status === 'at-risk').length;
+    return { ...a, atRisk, totalRisks };
+  });
+
+  const sorted = [...appsWithStats].sort((a, b) => b.atRisk - a.atRisk);
+  const max = Math.max(...appsWithStats.map(a => a.atRisk), 1);
 
   return (
     <div className="rounded-[14px]" style={{ background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}>
@@ -43,7 +54,7 @@ export default function AppsBarChart({ selectedApp, onSelect }: Props) {
                   style={{ width: `${(a.atRisk / max) * 100}%` }}
                 />
               </div>
-              <div className="text-[12px] whitespace-nowrap tabular-nums" style={{ color: 'var(--text-3)' }}>{a.atRisk} / {a.risks}</div>
+              <div className="text-[12px] whitespace-nowrap tabular-nums" style={{ color: 'var(--text-3)' }}>{a.atRisk} / {a.totalRisks}</div>
             </div>
           );
         })}

@@ -1,15 +1,22 @@
 'use client';
 
-import { APPS, RISKS, FINDINGS } from '@/shared/utils/data';
+import type { App, Risk, Finding } from '@/shared/types/domain';
 import { Icons } from '@/shared/components/Icon';
 
-interface Props { appId: string; }
+interface Props {
+  appId: string;
+  apps: App[];
+  risks: Risk[];
+  findings: Finding[];
+}
 
-export default function AppRail({ appId }: Props) {
-  const app = APPS.find(a => a.id === appId) ?? APPS[0];
-  const findings = FINDINGS[app.id] ?? {};
-  const reduced = RISKS.filter(r => findings[r.id] === 'reduced').length;
-  const pct = Math.round((reduced / RISKS.length) * 100);
+export default function AppRail({ appId, apps, risks, findings }: Props) {
+  const app = apps.find(a => a.id === appId) ?? apps[0];
+  const appFindings = findings.filter(f => f.appId === app?.id);
+  const reduced = appFindings.filter(f => f.status === 'reduced').length;
+  const pct = risks.length > 0 ? Math.round((reduced / risks.length) * 100) : 0;
+
+  if (!app) return null;
 
   return (
     <div className="rounded-[14px] p-[18px]" style={{ background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}>
@@ -28,8 +35,9 @@ export default function AppRail({ appId }: Props) {
       </div>
 
       <div className="text-[11px] font-bold uppercase tracking-widest mb-1.5" style={{ color: 'var(--text-3)' }}>Risk checklist</div>
-      {RISKS.map(r => {
-        const on = findings[r.id] === 'reduced';
+      {risks.map(r => {
+        const finding = appFindings.find(f => f.riskId === r.id);
+        const on = finding?.status === 'reduced';
         return (
           <div key={r.id} className="flex items-center gap-2.5 py-2.5" style={{ borderBottom: '1px solid var(--border)', fontSize: 13 }}>
             <div

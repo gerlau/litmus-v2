@@ -1,24 +1,27 @@
 'use client';
 
-import { RISKS, APPS, FINDINGS, App } from '@/shared/utils/data';
+import type { App, Risk, Finding } from '@/shared/types/domain';
 
 interface Props {
+  apps: App[];
+  risks: Risk[];
+  findings: Finding[];
   activeRisk: string;
   onSelect: (id: string) => void;
 }
 
-export default function RiskList({ activeRisk, onSelect }: Props) {
+export default function RiskList({ apps, risks, findings, activeRisk, onSelect }: Props) {
   return (
     <div>
-      {RISKS.map(r => {
+      {risks.map(r => {
+        const atRiskApps: App[] = [];
         let atRisk = 0;
         let reduced = 0;
-        const atRiskApps: App[] = [];
 
-        APPS.forEach(a => {
-          const f = FINDINGS[a.id] ?? {};
-          if (f[r.id] === 'at-risk') { atRisk++; atRiskApps.push(a); }
-          else if (f[r.id] === 'reduced') reduced++;
+        apps.forEach(a => {
+          const finding = findings.find(f => f.appId === a.id && f.riskId === r.id);
+          if (finding?.status === 'at-risk') { atRisk++; atRiskApps.push(a); }
+          else if (finding?.status === 'reduced') reduced++;
         });
 
         const total = atRisk + reduced;
@@ -40,7 +43,7 @@ export default function RiskList({ activeRisk, onSelect }: Props) {
               <span className="font-mono text-[11px] font-semibold px-2 py-1 rounded" style={{ background: 'var(--surface-3)', color: 'var(--text-3)' }}>{r.id}</span>
               <span className="flex-1 text-[14px] font-semibold" style={{ color: 'var(--text)' }}>{r.title}</span>
             </div>
-            <p className="text-[13px] m-0 leading-snug" style={{ color: 'var(--text-2)' }}>{r.desc}</p>
+            <p className="text-[13px] m-0 leading-snug" style={{ color: 'var(--text-2)' }}>{r.description}</p>
             <div className="flex items-center gap-2.5 mt-3 pt-2.5 text-[12px]" style={{ borderTop: '1px solid var(--border)', color: 'var(--text-3)' }}>
               <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: 'var(--danger-soft)', color: 'var(--danger)' }}>{atRisk} at risk</span>
               <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: 'var(--success-soft)', color: 'var(--success)' }}>{reduced} reduced</span>

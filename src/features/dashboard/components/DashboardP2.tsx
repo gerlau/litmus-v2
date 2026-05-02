@@ -1,13 +1,19 @@
 'use client';
 
 import { useState } from 'react';
-import { RISKS } from '@/shared/utils/data';
+import type { App, Risk, Finding } from '@/shared/types/domain';
 import { Icons } from '@/shared/components/Icon';
 import RiskList from './RiskList';
 import DivergentChart from './DivergentChart';
 
-export default function DashboardP2() {
-  const [activeRisk, setActiveRisk] = useState(RISKS[0].id);
+interface Props {
+  apps: App[];
+  risks: Risk[];
+  findings: Finding[];
+}
+
+export default function DashboardP2({ apps, risks, findings }: Props) {
+  const [activeRisk, setActiveRisk] = useState(risks[0]?.id ?? '');
 
   return (
     <div className="grid gap-[18px] items-start" style={{ gridTemplateColumns: '1fr 1.4fr' }}>
@@ -23,9 +29,9 @@ export default function DashboardP2() {
             </button>
           </div>
         </div>
-        <RiskList activeRisk={activeRisk} onSelect={setActiveRisk} />
+        <RiskList apps={apps} risks={risks} findings={findings} activeRisk={activeRisk} onSelect={setActiveRisk} />
       </div>
-      <DivergentChart activeRisk={activeRisk} />
+      <DivergentChart apps={apps} risks={risks} findings={findings} activeRisk={activeRisk} />
     </div>
   );
 }

@@ -1,13 +1,19 @@
-import { APPS, FEATURES, RISKS } from '@/shared/utils/data';
+import type { App, Feature, Risk } from '@/shared/types/domain';
 
-export default function StatStrip() {
-  const sectors = new Set(APPS.map(a => a.sector));
+interface Props {
+  apps: App[];
+  features: Feature[];
+  risks: Risk[];
+}
+
+export default function StatStrip({ apps, features, risks }: Props) {
+  const sectors = new Set(apps.map(a => a.sector));
 
   const cells = [
-    { label: 'Apps', value: APPS.length, color: '#fff', foot: 'Currently in scope' },
+    { label: 'Apps', value: apps.length, color: '#fff', foot: 'Currently in scope' },
     { label: 'Sectors', value: sectors.size, color: '#fbbf24', foot: 'Across the portfolio' },
-    { label: 'Features', value: FEATURES.length, color: '#60a5fa', foot: 'Tracked across apps' },
-    { label: 'Risks', value: RISKS.length, color: '#f87171', foot: 'Documented risk types' },
+    { label: 'Features', value: features.length, color: '#60a5fa', foot: 'Tracked across apps' },
+    { label: 'Risks', value: risks.length, color: '#f87171', foot: 'Documented risk types' },
   ];
 
   return (

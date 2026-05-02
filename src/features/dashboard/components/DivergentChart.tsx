@@ -1,9 +1,14 @@
-import { RISKS, APPS, FINDINGS } from '@/shared/utils/data';
+import type { App, Risk, Finding } from '@/shared/types/domain';
 
-interface Props { activeRisk: string; }
+interface Props {
+  apps: App[];
+  risks: Risk[];
+  findings: Finding[];
+  activeRisk: string;
+}
 
-export default function DivergentChart({ activeRisk }: Props) {
-  const max = APPS.length;
+export default function DivergentChart({ apps, risks, findings, activeRisk }: Props) {
+  const max = apps.length || 1;
 
   return (
     <div className="rounded-[14px]" style={{ background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}>
@@ -12,12 +17,13 @@ export default function DivergentChart({ activeRisk }: Props) {
         <div className="text-[12.5px]" style={{ color: 'var(--text-3)' }}>At Risk ← • → Reduced Risk</div>
       </div>
       <div className="p-[22px]">
-        {RISKS.map(r => {
+        {risks.map(r => {
           let atRisk = 0;
           let reduced = 0;
-          Object.values(FINDINGS).forEach(f => {
-            if (f[r.id] === 'at-risk') atRisk++;
-            else if (f[r.id] === 'reduced') reduced++;
+          findings.forEach(f => {
+            if (f.riskId !== r.id) return;
+            if (f.status === 'at-risk') atRisk++;
+            else if (f.status === 'reduced') reduced++;
           });
           const isActive = activeRisk === r.id;
 
@@ -34,12 +40,10 @@ export default function DivergentChart({ activeRisk }: Props) {
                 <span className="font-mono text-[10.5px] font-semibold px-[7px] py-[3px] rounded uppercase" style={{ background: 'var(--surface-3)', color: 'var(--text-3)' }}>{r.id}</span>
                 <span className="overflow-hidden text-ellipsis whitespace-nowrap">{r.title}</span>
               </div>
-              {/* Left bar: At Risk */}
               <div className="flex items-center justify-end h-[22px] pr-px">
                 <div className="div-seg-l rounded-l h-full" style={{ width: `${(atRisk / max) * 100}%` }} />
                 <span className="text-[11px] font-semibold ml-1.5" style={{ color: 'var(--danger)' }}>{atRisk}</span>
               </div>
-              {/* Right bar: Reduced */}
               <div className="flex items-center justify-start h-[22px] pl-px">
                 <span className="text-[11px] font-semibold mr-1.5" style={{ color: 'var(--success)' }}>{reduced}</span>
                 <div className="div-seg-r rounded-r h-full" style={{ width: `${(reduced / max) * 100}%` }} />

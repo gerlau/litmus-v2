@@ -1,20 +1,18 @@
 'use client';
 
-import { CisoContact } from '@/shared/utils/data';
+import type { CISO } from '@/shared/types/domain';
 
 interface Props {
   index: number;
   total: number;
-  value: CisoContact;
-  onChange: (v: CisoContact) => void;
+  value: CISO;
+  onChange: (v: CISO) => void;
   onRemove: () => void;
 }
 
-const fields: { key: keyof CisoContact; label: string; placeholder: string }[] = [
+const fields: { key: keyof CISO; label: string; placeholder: string }[] = [
   { key: 'name', label: 'Full name', placeholder: 'Jane Doe' },
-  { key: 'title', label: 'Title', placeholder: 'Chief Information Security Officer' },
   { key: 'email', label: 'Email', placeholder: 'jane.doe@example.com' },
-  { key: 'phone', label: 'Phone', placeholder: '+1 (555) 555-0123' },
 ];
 
 export default function CisoBlock({ index, total, value, onChange, onRemove }: Props) {

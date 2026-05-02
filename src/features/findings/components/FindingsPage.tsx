@@ -1,30 +1,59 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { APPS, FEATURES, RISKS, FINDINGS, FindingStatus } from '@/shared/utils/data';
+import { useState, useTransition } from 'react';
+import type { App, Feature, Risk, Finding, FindingStatus } from '@/shared/types/domain';
+import { upsertFinding } from '@/lib/actions/findings';
 import RiskRow from './RiskRow';
 
-export default function FindingsPage() {
-  const [appId, setAppId] = useState(APPS[0].id);
-  const [findings, setFindings] = useState<Record<string, FindingStatus>>({ ...FINDINGS[appId] });
+const selectStyle = { background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)', backgroundImage: "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5'><polyline points='6 9 12 15 18 9'/></svg>\")", backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center', paddingRight: 32 };
 
-  useEffect(() => { setFindings({ ...FINDINGS[appId] }); }, [appId]);
+interface Props {
+  apps: App[];
+  features: Feature[];
+  risks: Risk[];
+  allFindings: Finding[];
+}
 
-  const toggle = (rid: string) =>
-    setFindings(f => ({ ...f, [rid]: f[rid] === 'reduced' ? 'at-risk' : 'reduced' }));
+export default function FindingsPage({ apps, features, risks, allFindings }: Props) {
+  const [appId, setAppId] = useState(apps[0]?.id ?? '');
+  const [optimistic, setOptimistic] = useState<Record<string, FindingStatus>>({});
+  const [, startTransition] = useTransition();
 
-  const reducedCount = Object.values(findings).filter(v => v === 'reduced').length;
-  const total = RISKS.length;
-  const pct = Math.round((reducedCount / total) * 100);
+  const appFindings = allFindings.filter(f => f.appId === appId);
 
-  // Group risks by feature
-  const byFeature = RISKS.reduce<Record<string, typeof RISKS>>((acc, r) => {
+  function getStatus(riskId: string): FindingStatus {
+    if (riskId in optimistic) return optimistic[riskId];
+    return appFindings.find(f => f.riskId === riskId)?.status ?? 'at-risk';
+  }
+
+  function getFinding(riskId: string): Finding | null {
+    return appFindings.find(f => f.riskId === riskId) ?? null;
+  }
+
+  function toggle(riskId: string) {
+    const current = getStatus(riskId);
+    const next: FindingStatus = current === 'reduced' ? 'at-risk' : 'reduced';
+    setOptimistic(o => ({ ...o, [riskId]: next }));
+    startTransition(async () => {
+      await upsertFinding(appId, riskId, next);
+      setOptimistic(o => { const { [riskId]: _, ...rest } = o; return rest; });
+    });
+  }
+
+  function handleAppChange(id: string) {
+    setAppId(id);
+    setOptimistic({});
+  }
+
+  const reducedCount = risks.filter(r => getStatus(r.id) === 'reduced').length;
+  const total = risks.length;
+  const pct = total > 0 ? Math.round((reducedCount / total) * 100) : 0;
+
+  const byFeature = risks.reduce<Record<string, Risk[]>>((acc, r) => {
     if (!acc[r.featureId]) acc[r.featureId] = [];
     acc[r.featureId].push(r);
     return acc;
   }, {});
-
-  const selectStyle = { background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)', backgroundImage: "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5'><polyline points='6 9 12 15 18 9'/></svg>\")", backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center', paddingRight: 32 };
 
   return (
     <div>
@@ -33,13 +62,12 @@ export default function FindingsPage() {
         <p className="m-0 text-[13.5px]" style={{ color: 'var(--text-3)' }}>Per-application findings: mark each risk as At Risk or Reduced and document the assessment.</p>
       </div>
 
-      {/* App selector + summary */}
       <div className="rounded-[14px] p-[22px] mb-4" style={{ background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}>
         <div className="flex items-center gap-4 flex-wrap">
           <div style={{ minWidth: 280, flex: 1 }}>
             <label className="block text-[12px] font-medium mb-1.5" style={{ color: 'var(--text-2)' }}>Application</label>
-            <select className="w-full rounded-lg px-3 py-2.5 text-[13.5px] appearance-none field-select" style={selectStyle} value={appId} onChange={e => setAppId(e.target.value)}>
-              {APPS.map(a => <option key={a.id} value={a.id}>{a.id} — {a.name}</option>)}
+            <select className="w-full rounded-lg px-3 py-2.5 text-[13.5px] appearance-none field-select" style={selectStyle} value={appId} onChange={e => handleAppChange(e.target.value)}>
+              {apps.map(a => <option key={a.id} value={a.id}>{a.id} — {a.name}</option>)}
             </select>
           </div>
           <div className="flex gap-[18px]">
@@ -57,9 +85,8 @@ export default function FindingsPage() {
         </div>
       </div>
 
-      {/* Risks grouped by feature */}
       {Object.keys(byFeature).map(fid => {
-        const feat = FEATURES.find(f => f.id === fid);
+        const feat = features.find(f => f.id === fid);
         if (!feat) return null;
         return (
           <div key={fid} className="mb-5">
@@ -70,7 +97,15 @@ export default function FindingsPage() {
               <span className="ml-auto text-[12px]" style={{ color: 'var(--text-3)' }}>{byFeature[fid].length} risk{byFeature[fid].length > 1 ? 's' : ''}</span>
             </div>
             {byFeature[fid].map(r => (
-              <RiskRow key={r.id} risk={r} status={findings[r.id] ?? 'at-risk'} onToggle={toggle} />
+              <RiskRow
+                key={r.id}
+                risk={r}
+                features={features}
+                appId={appId}
+                finding={getFinding(r.id)}
+                status={getStatus(r.id)}
+                onToggle={toggle}
+              />
             ))}
           </div>
         );

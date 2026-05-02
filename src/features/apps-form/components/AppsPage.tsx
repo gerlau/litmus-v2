@@ -1,26 +1,55 @@
 'use client';
 
 import { useState } from 'react';
-import { SECTORS, CisoContact } from '@/shared/utils/data';
+import { useRouter } from 'next/navigation';
+import type { App } from '@/shared/types/domain';
+import { SECTORS } from '@/shared/utils/data';
+import { updateApp, deleteApp } from '@/lib/actions/apps';
 import DangerZone from '@/shared/components/DangerZone';
 import CisoBlock from './CisoBlock';
 
 const selectStyle = { background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)', backgroundImage: "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5'><polyline points='6 9 12 15 18 9'/></svg>\")", backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center', paddingRight: 32 };
 
-const INITIAL_CISOS: CisoContact[] = [
-  { name: 'Jane Doe', title: 'Chief Information Security Officer', email: 'jane.doe@northbank.example', phone: '+1 (555) 555-0101' },
-];
+interface Props {
+  apps: App[];
+}
 
-export default function AppsPage() {
-  const [name, setName] = useState('NorthBank Mobile');
-  const [agency, setAgency] = useState('NorthBank Holdings');
-  const [version, setVersion] = useState('4.12.1');
-  const [sector, setSector] = useState('Financial Services');
-  const [cisos, setCisos] = useState<CisoContact[]>(INITIAL_CISOS);
+export default function AppsPage({ apps }: Props) {
+  const router = useRouter();
+  const [appId, setAppId] = useState(apps[0]?.id ?? '');
 
-  const updateCiso = (i: number, v: CisoContact) => setCisos(cisos.map((c, j) => j === i ? v : c));
-  const removeCiso = (i: number) => setCisos(cisos.filter((_, j) => j !== i));
-  const addCiso = () => setCisos([...cisos, { name: '', title: '', email: '', phone: '' }]);
+  const selected = apps.find(a => a.id === appId) ?? apps[0];
+
+  const [name, setName] = useState(selected?.name ?? '');
+  const [agency, setAgency] = useState(selected?.agency ?? '');
+  const [version, setVersion] = useState(selected?.version ?? '');
+  const [sector, setSector] = useState(selected?.sector ?? '');
+  const [cisos, setCisos] = useState(selected?.cisos ?? []);
+
+  function selectApp(id: string) {
+    const app = apps.find(a => a.id === id);
+    if (!app) return;
+    setAppId(id);
+    setName(app.name);
+    setAgency(app.agency);
+    setVersion(app.version);
+    setSector(app.sector);
+    setCisos(app.cisos);
+  }
+
+  async function handleUpdate() {
+    await updateApp(appId, { name, agency, version, sector, cisos });
+    router.refresh();
+  }
+
+  async function handleDelete() {
+    await deleteApp(appId);
+    const remaining = apps.filter(a => a.id !== appId);
+    if (remaining.length > 0) selectApp(remaining[0].id);
+    router.refresh();
+  }
+
+  if (!selected) return null;
 
   return (
     <div>
@@ -30,6 +59,18 @@ export default function AppsPage() {
       </div>
 
       <div className="rounded-[14px] p-[22px]" style={{ background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)', maxWidth: 760 }}>
+        <div className="flex flex-col gap-1.5 mb-5">
+          <label className="text-[12px] font-medium" style={{ color: 'var(--text-2)' }}>Select Application</label>
+          <select
+            className="w-full rounded-lg px-3 py-2.5 text-[13.5px] field-select appearance-none"
+            style={selectStyle}
+            value={appId}
+            onChange={e => selectApp(e.target.value)}
+          >
+            {apps.map(a => <option key={a.id} value={a.id}>{a.id} — {a.name}</option>)}
+          </select>
+        </div>
+
         <h3 className="text-[15px] font-semibold m-0 mb-[18px]" style={{ color: 'var(--text)' }}>Application Details</h3>
 
         <div className="grid grid-cols-2 gap-3.5">
@@ -53,19 +94,34 @@ export default function AppsPage() {
 
         <div className="text-[11px] font-bold uppercase tracking-[0.1em] mt-5 mb-2.5" style={{ color: 'var(--text-2)' }}>CISO Points of Contact</div>
         {cisos.map((c, i) => (
-          <CisoBlock key={i} index={i} total={cisos.length} value={c} onChange={v => updateCiso(i, v)} onRemove={() => removeCiso(i)} />
+          <CisoBlock
+            key={i}
+            index={i}
+            total={cisos.length}
+            value={c}
+            onChange={v => setCisos(cisos.map((x, j) => j === i ? v : x))}
+            onRemove={() => setCisos(cisos.filter((_, j) => j !== i))}
+          />
         ))}
-        <button className="rounded-md px-2.5 py-1.5 text-[12px] font-medium" style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text-2)', cursor: 'pointer' }} onClick={addCiso}>
+        <button
+          className="rounded-md px-2.5 py-1.5 text-[12px] font-medium"
+          style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text-2)', cursor: 'pointer' }}
+          onClick={() => setCisos([...cisos, { name: '', email: '' }])}
+        >
           + Add another contact
         </button>
 
         <div className="mt-5">
-          <button className="w-full py-3.5 rounded-lg text-[12.5px] font-semibold uppercase tracking-widest" style={{ background: 'var(--ink)', color: '#fff', border: 'none', cursor: 'pointer' }}>
+          <button
+            className="w-full py-3.5 rounded-lg text-[12.5px] font-semibold uppercase tracking-widest"
+            style={{ background: 'var(--ink)', color: '#fff', border: 'none', cursor: 'pointer' }}
+            onClick={handleUpdate}
+          >
             Update Application
           </button>
         </div>
 
-        <DangerZone label="application" />
+        <DangerZone label="application" onDelete={handleDelete} />
       </div>
     </div>
   );
