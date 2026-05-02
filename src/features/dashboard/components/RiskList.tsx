@@ -1,0 +1,70 @@
+'use client';
+
+import { RISKS, APPS, FINDINGS, App } from '@/shared/utils/data';
+
+interface Props {
+  activeRisk: string;
+  onSelect: (id: string) => void;
+}
+
+export default function RiskList({ activeRisk, onSelect }: Props) {
+  return (
+    <div>
+      {RISKS.map(r => {
+        let atRisk = 0;
+        let reduced = 0;
+        const atRiskApps: App[] = [];
+
+        APPS.forEach(a => {
+          const f = FINDINGS[a.id] ?? {};
+          if (f[r.id] === 'at-risk') { atRisk++; atRiskApps.push(a); }
+          else if (f[r.id] === 'reduced') reduced++;
+        });
+
+        const total = atRisk + reduced;
+        const reducedPct = total ? Math.round((reduced / total) * 100) : 0;
+        const isActive = activeRisk === r.id;
+
+        return (
+          <div
+            key={r.id}
+            className="rounded-xl p-4 mb-3 cursor-pointer"
+            style={{
+              background: 'var(--surface)',
+              border: `1px solid ${isActive ? 'var(--accent)' : 'var(--border)'}`,
+              boxShadow: isActive ? '0 0 0 3px color-mix(in oklch,var(--accent) 18%,transparent)' : 'var(--shadow-sm)',
+            }}
+            onClick={() => onSelect(r.id)}
+          >
+            <div className="flex items-start gap-3 mb-2.5">
+              <span className="font-mono text-[11px] font-semibold px-2 py-1 rounded" style={{ background: 'var(--surface-3)', color: 'var(--text-3)' }}>{r.id}</span>
+              <span className="flex-1 text-[14px] font-semibold" style={{ color: 'var(--text)' }}>{r.title}</span>
+            </div>
+            <p className="text-[13px] m-0 leading-snug" style={{ color: 'var(--text-2)' }}>{r.desc}</p>
+            <div className="flex items-center gap-2.5 mt-3 pt-2.5 text-[12px]" style={{ borderTop: '1px solid var(--border)', color: 'var(--text-3)' }}>
+              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: 'var(--danger-soft)', color: 'var(--danger)' }}>{atRisk} at risk</span>
+              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: 'var(--success-soft)', color: 'var(--success)' }}>{reduced} reduced</span>
+              <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
+                <div className="h-full rounded-full" style={{ width: `${reducedPct}%`, background: 'linear-gradient(90deg,#34d399,#10b981)' }} />
+              </div>
+              <span className="tabular-nums">{reducedPct}%</span>
+            </div>
+            {atRiskApps.length > 0 && (
+              <div className="mt-2.5 pt-2.5" style={{ borderTop: '1px dashed var(--border)' }}>
+                <div className="text-[10.5px] font-bold uppercase tracking-widest mb-1.5" style={{ color: 'var(--danger)' }}>Apps at risk</div>
+                <div className="flex flex-wrap gap-1.5">
+                  {atRiskApps.map(a => (
+                    <span key={a.id} className="inline-flex items-center gap-1.5 text-[11.5px] font-medium px-2 py-0.5 rounded-full" style={{ background: 'var(--danger-soft)', color: 'var(--danger)' }}>
+                      <span className="font-mono text-[10px] opacity-70">{a.id}</span>
+                      {a.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
