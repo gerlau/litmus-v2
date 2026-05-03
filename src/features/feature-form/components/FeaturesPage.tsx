@@ -46,6 +46,7 @@ export default function FeaturesPage({ features }: Props) {
   const [newId, setNewId] = useState('');
   const [newName, setNewName] = useState('');
   const [newPlatform, setNewPlatform] = useState('');
+  const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'deleting' | 'deleted'>('idle');
 
   function selectFeature(id: string) {
     const f = features.find(x => x.id === id);
@@ -91,11 +92,15 @@ export default function FeaturesPage({ features }: Props) {
   }
 
   async function handleUpdate() {
+    setStatus('saving');
     await updateFeature(featureId, { description: desc, additionalContext: ctx || undefined, demonstration: buildDemonstration() });
     router.refresh();
+    setStatus('saved');
+    setTimeout(() => setStatus('idle'), 2500);
   }
 
   async function handleAdd() {
+    setStatus('saving');
     const created = await createFeature({
       id: newId,
       name: newName,
@@ -107,13 +112,18 @@ export default function FeaturesPage({ features }: Props) {
     setMode('update');
     setFeatureId(created.id);
     router.refresh();
+    setStatus('saved');
+    setTimeout(() => setStatus('idle'), 2500);
   }
 
   async function handleDelete() {
+    setStatus('deleting');
     await deleteFeature(featureId);
     const remaining = features.filter(f => f.id !== featureId);
     if (remaining.length > 0) selectFeature(remaining[0].id);
     router.refresh();
+    setStatus('deleted');
+    setTimeout(() => setStatus('idle'), 2500);
   }
 
   const selectStyle = { background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)', backgroundImage: "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5'><polyline points='6 9 12 15 18 9'/></svg>\")", backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center', paddingRight: 32 };
@@ -218,12 +228,25 @@ export default function FeaturesPage({ features }: Props) {
         <div className="mt-5">
           <button
             className="w-full py-3.5 rounded-lg text-[12.5px] font-semibold uppercase tracking-widest"
-            style={{ background: 'var(--ink)', color: '#fff', border: 'none', cursor: 'pointer' }}
+            style={{
+              background: 'var(--ink)',
+              color: '#fff',
+              border: 'none',
+              cursor: (status === 'saving' || status === 'deleting') ? 'not-allowed' : 'pointer',
+              opacity: (status === 'saving' || status === 'deleting') ? 0.65 : 1,
+            }}
             onClick={mode === 'update' ? handleUpdate : handleAdd}
+            disabled={status === 'saving' || status === 'deleting'}
           >
-            {mode === 'update' ? 'Update Feature' : 'Add Feature'}
+            {status === 'saving' ? 'Saving…' : mode === 'update' ? 'Update Feature' : 'Add Feature'}
           </button>
         </div>
+
+        {(status === 'saved' || status === 'deleted') && (
+          <p className="mt-2 text-[12.5px]" style={{ color: '#22c55e' }}>
+            ✓ {status === 'saved' ? 'Saved successfully' : 'Deleted successfully'}
+          </p>
+        )}
 
         {mode === 'update' && <DangerZone label="feature" onDelete={handleDelete} />}
       </div>

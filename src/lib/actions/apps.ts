@@ -12,6 +12,13 @@ export async function getApp(id: string): Promise<App | null> {
   return q.getById(id);
 }
 
+export async function createApp(app: App): Promise<App> {
+  const result = await q.insert(app);
+  revalidatePath('/apps');
+  revalidatePath('/');
+  return result;
+}
+
 export async function updateApp(
   id: string,
   changes: Partial<Omit<App, 'id' | 'createdAt'>>,

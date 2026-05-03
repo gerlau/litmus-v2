@@ -24,6 +24,7 @@ type MetValue = 'met' | 'not';
 export default function RiskRow({ risk, features, appId, finding, status, onToggle }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [descMet, setDescMet] = useState<MetValue>(status === 'reduced' ? 'met' : 'not');
   const [goalMet, setGoalMet] = useState<MetValue>(status === 'reduced' ? 'met' : 'not');
   const [desc, setDesc] = useState(risk.description);
@@ -41,6 +42,7 @@ export default function RiskRow({ risk, features, appId, finding, status, onTogg
   const on = status === 'reduced';
 
   async function handleSave() {
+    setSaveStatus('saving');
     const observation = [
       { id: 'risk_status' as const, text: status },
       { id: 'description_status' as const, label: 'Description', text: descMet === 'met' ? 'met' as const : 'not-met' as const },
@@ -60,7 +62,8 @@ export default function RiskRow({ risk, features, appId, finding, status, onTogg
     ];
     await upsertFinding(appId, risk.id, status, observation);
     router.refresh();
-    setOpen(false);
+    setSaveStatus('saved');
+    setTimeout(() => { setOpen(false); setSaveStatus('idle'); }, 1500);
   }
 
   return (
@@ -138,13 +141,20 @@ export default function RiskRow({ risk, features, appId, finding, status, onTogg
           <div className="text-[11px] font-bold uppercase tracking-[0.1em] mt-4 mb-2.5" style={{ color: 'var(--text-2)' }}>Steps</div>
           <StepsBlock steps={steps} setSteps={setSteps} context="findings" />
 
-          <div className="flex gap-2.5 mt-4">
+          <div className="flex items-center gap-2.5 mt-4 flex-wrap">
             <button
               className="inline-flex items-center justify-center rounded-lg px-[22px] py-3 text-[12.5px] font-semibold uppercase tracking-widest"
-              style={{ background: 'var(--ink)', color: '#fff', border: 'none', cursor: 'pointer' }}
+              style={{
+                background: 'var(--ink)',
+                color: '#fff',
+                border: 'none',
+                cursor: saveStatus === 'saving' ? 'not-allowed' : 'pointer',
+                opacity: saveStatus === 'saving' ? 0.65 : 1,
+              }}
               onClick={handleSave}
+              disabled={saveStatus === 'saving'}
             >
-              Save Finding
+              {saveStatus === 'saving' ? 'Saving…' : 'Save Finding'}
             </button>
             <button
               className="inline-flex items-center justify-center rounded-lg px-3 py-2 text-[12px] font-medium"
@@ -153,6 +163,9 @@ export default function RiskRow({ risk, features, appId, finding, status, onTogg
             >
               Cancel
             </button>
+            {saveStatus === 'saved' && (
+              <span className="text-[12.5px]" style={{ color: '#22c55e' }}>✓ Saved successfully</span>
+            )}
           </div>
         </div>
       )}
