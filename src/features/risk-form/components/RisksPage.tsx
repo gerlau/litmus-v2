@@ -44,6 +44,7 @@ export default function RisksPage({ features, risks }: Props) {
   const [goal, setGoal] = useState(firstRisk?.goal ?? '');
   const [rows, setRows] = useState<DemoRow[]>(() => firstRisk ? toRows(firstRisk) : []);
   const [steps, setSteps] = useState<Step[]>(() => firstRisk ? toSteps(firstRisk) : []);
+  const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'deleting' | 'deleted'>('idle');
 
   const featureRisks = risks.filter(r => r.featureId === selectedFeatureId);
 
@@ -104,6 +105,7 @@ export default function RisksPage({ features, risks }: Props) {
   }
 
   async function handleSave() {
+    setStatus('saving');
     const demonstration = buildDemonstration();
     if (isNew) {
       const created = await createRisk({ featureId: selectedFeatureId, title, description: desc, goal, demonstration });
@@ -113,9 +115,12 @@ export default function RisksPage({ features, risks }: Props) {
       await updateRisk(riskId, { title, description: desc, goal, demonstration });
     }
     router.refresh();
+    setStatus('saved');
+    setTimeout(() => setStatus('idle'), 2500);
   }
 
   async function handleDelete() {
+    setStatus('deleting');
     await deleteRisk(riskId);
     const remaining = featureRisks.filter(r => r.id !== riskId);
     if (remaining.length > 0) {
@@ -124,6 +129,8 @@ export default function RisksPage({ features, risks }: Props) {
       enterNewMode();
     }
     router.refresh();
+    setStatus('deleted');
+    setTimeout(() => setStatus('idle'), 2500);
   }
 
   return (
@@ -175,12 +182,25 @@ export default function RisksPage({ features, risks }: Props) {
         <div className="mt-5">
           <button
             className="w-full py-3.5 rounded-lg text-[12.5px] font-semibold uppercase tracking-widest"
-            style={{ background: 'var(--ink)', color: '#fff', border: 'none', cursor: 'pointer' }}
+            style={{
+              background: 'var(--ink)',
+              color: '#fff',
+              border: 'none',
+              cursor: (status === 'saving' || status === 'deleting') ? 'not-allowed' : 'pointer',
+              opacity: (status === 'saving' || status === 'deleting') ? 0.65 : 1,
+            }}
             onClick={handleSave}
+            disabled={status === 'saving' || status === 'deleting'}
           >
-            {isNew ? 'Add Risk' : 'Update Risk'}
+            {status === 'saving' ? 'Saving…' : isNew ? 'Add Risk' : 'Update Risk'}
           </button>
         </div>
+
+        {(status === 'saved' || status === 'deleted') && (
+          <p className="mt-2 text-[12.5px]" style={{ color: '#22c55e' }}>
+            ✓ {status === 'saved' ? 'Saved successfully' : 'Deleted successfully'}
+          </p>
+        )}
 
         {!isNew && <DangerZone label="risk" onDelete={handleDelete} />}
       </div>

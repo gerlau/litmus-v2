@@ -1,15 +1,20 @@
 {
   "pages": {
-    "/risks/page": [
+    "/findings/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/risks/page.js"
+      "static/chunks/app/findings/page.js"
     ],
     "/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/css/app/layout.css",
       "static/chunks/app/layout.js"
+    ],
+    "/risks/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/risks/page.js"
     ]
   }
 }
