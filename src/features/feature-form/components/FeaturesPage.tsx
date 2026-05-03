@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Feature, DemoTableItem, DemoStepsItem } from '@/shared/types/domain';
 import { type DemoRow, type Step } from '@/shared/utils/data';
-import { updateFeature, deleteFeature } from '@/lib/actions/features';
+import { updateFeature, deleteFeature, createFeature } from '@/lib/actions/features';
 import DemoTable from '@/shared/components/DemoTable';
 import StepsBlock from '@/shared/components/StepsBlock';
 import DangerZone from '@/shared/components/DangerZone';
@@ -17,6 +17,15 @@ function toRows(feature: Feature): DemoRow[] {
 function toSteps(feature: Feature): Step[] {
   const item = feature.demonstration.find(d => d.type === 'steps') as DemoStepsItem | undefined;
   return item?.items.map(s => ({ text: s.text, file: s.images[0] ?? '' })) ?? [];
+}
+
+function nextFeatureId(features: Feature[]): string {
+  if (features.length === 0) return 'F-001';
+  const max = features.reduce((best, f) => {
+    const n = parseInt(f.id.replace(/^[A-Z]+-/, ''), 10);
+    return isNaN(n) ? best : Math.max(best, n);
+  }, 0);
+  return `F-${String(max + 1).padStart(3, '0')}`;
 }
 
 interface Props {
@@ -33,6 +42,11 @@ export default function FeaturesPage({ features }: Props) {
   const [rows, setRows] = useState<DemoRow[]>(() => first ? toRows(first) : []);
   const [steps, setSteps] = useState<Step[]>(() => first ? toSteps(first) : []);
 
+  const [mode, setMode] = useState<'update' | 'add'>('update');
+  const [newId, setNewId] = useState('');
+  const [newName, setNewName] = useState('');
+  const [newPlatform, setNewPlatform] = useState('');
+
   function selectFeature(id: string) {
     const f = features.find(x => x.id === id);
     if (!f) return;
@@ -43,8 +57,24 @@ export default function FeaturesPage({ features }: Props) {
     setSteps(toSteps(f));
   }
 
-  async function handleUpdate() {
-    const demonstration = [
+  function enterAddMode() {
+    setMode('add');
+    setNewId(nextFeatureId(features));
+    setNewName('');
+    setNewPlatform('');
+    setDesc('');
+    setCtx('');
+    setRows([]);
+    setSteps([]);
+  }
+
+  function cancelAddMode() {
+    setMode('update');
+    if (featureId) selectFeature(featureId);
+  }
+
+  function buildDemonstration() {
+    return [
       {
         id: 'setup_table',
         type: 'table' as const,
@@ -58,7 +88,24 @@ export default function FeaturesPage({ features }: Props) {
         items: steps.map((s, i) => ({ id: `step_${i + 1}`, text: s.text, images: s.file ? [s.file] : [] })),
       },
     ];
-    await updateFeature(featureId, { description: desc, additionalContext: ctx || undefined, demonstration });
+  }
+
+  async function handleUpdate() {
+    await updateFeature(featureId, { description: desc, additionalContext: ctx || undefined, demonstration: buildDemonstration() });
+    router.refresh();
+  }
+
+  async function handleAdd() {
+    const created = await createFeature({
+      id: newId,
+      name: newName,
+      platform: newPlatform,
+      description: desc,
+      additionalContext: ctx || undefined,
+      demonstration: buildDemonstration(),
+    });
+    setMode('update');
+    setFeatureId(created.id);
     router.refresh();
   }
 
@@ -70,6 +117,7 @@ export default function FeaturesPage({ features }: Props) {
   }
 
   const selectStyle = { background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)', backgroundImage: "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5'><polyline points='6 9 12 15 18 9'/></svg>\")", backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center', paddingRight: 32 };
+  const inputStyle = { background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)' };
 
   return (
     <div>
@@ -79,19 +127,77 @@ export default function FeaturesPage({ features }: Props) {
       </div>
 
       <div className="rounded-[14px] p-[22px]" style={{ background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)', maxWidth: 760 }}>
-        <h3 className="text-[15px] font-semibold m-0 mb-[18px]" style={{ color: 'var(--text)' }}>Add / Update Feature</h3>
+        <div className="flex items-center justify-between mb-[18px]">
+          <h3 className="text-[15px] font-semibold m-0" style={{ color: 'var(--text)' }}>Add / Update Feature</h3>
+          {mode === 'update' && (
+            <button
+              onClick={enterAddMode}
+              className="text-[12px] font-semibold rounded-md px-2.5 py-1.5"
+              style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text-2)', cursor: 'pointer' }}
+            >
+              + New Feature
+            </button>
+          )}
+          {mode === 'add' && (
+            <button
+              onClick={cancelAddMode}
+              className="text-[12px] font-medium"
+              style={{ background: 'none', border: 'none', color: 'var(--text-3)', cursor: 'pointer', textDecoration: 'underline' }}
+            >
+              Cancel
+            </button>
+          )}
+        </div>
 
         <div className="flex flex-col gap-1.5 mb-3.5">
           <label className="text-[12px] font-medium" style={{ color: 'var(--text-2)' }}>Feature ID</label>
-          <select
-            className="w-full rounded-lg px-3 py-2.5 text-[13.5px] field-select appearance-none"
-            style={selectStyle}
-            value={featureId}
-            onChange={e => selectFeature(e.target.value)}
-          >
-            {features.map(f => <option key={f.id} value={f.id}>{f.id} — {f.name}</option>)}
-          </select>
+          {mode === 'update' ? (
+            <select
+              className="w-full rounded-lg px-3 py-2.5 text-[13.5px] field-select appearance-none"
+              style={selectStyle}
+              value={featureId}
+              onChange={e => selectFeature(e.target.value)}
+            >
+              {features.map(f => <option key={f.id} value={f.id}>{f.id} — {f.name}</option>)}
+            </select>
+          ) : (
+            <input
+              required
+              className="w-full rounded-lg px-3 py-2.5 text-[13.5px] field-input"
+              style={inputStyle}
+              value={newId}
+              onChange={e => setNewId(e.target.value)}
+              placeholder="e.g. F-004"
+            />
+          )}
         </div>
+
+        {mode === 'add' && (
+          <>
+            <div className="flex flex-col gap-1.5 mb-3.5">
+              <label className="text-[12px] font-medium" style={{ color: 'var(--text-2)' }}>Feature Name</label>
+              <input
+                required
+                className="w-full rounded-lg px-3 py-2.5 text-[13.5px] field-input"
+                style={inputStyle}
+                value={newName}
+                onChange={e => setNewName(e.target.value)}
+                placeholder="e.g. Biometric Authentication"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5 mb-3.5">
+              <label className="text-[12px] font-medium" style={{ color: 'var(--text-2)' }}>Platform</label>
+              <input
+                required
+                className="w-full rounded-lg px-3 py-2.5 text-[13.5px] field-input"
+                style={inputStyle}
+                value={newPlatform}
+                onChange={e => setNewPlatform(e.target.value)}
+                placeholder="e.g. iOS / Android"
+              />
+            </div>
+          </>
+        )}
 
         <div className="flex flex-col gap-1.5 mb-3.5">
           <label className="text-[12px] font-medium" style={{ color: 'var(--text-2)' }}>Description</label>
@@ -113,13 +219,13 @@ export default function FeaturesPage({ features }: Props) {
           <button
             className="w-full py-3.5 rounded-lg text-[12.5px] font-semibold uppercase tracking-widest"
             style={{ background: 'var(--ink)', color: '#fff', border: 'none', cursor: 'pointer' }}
-            onClick={handleUpdate}
+            onClick={mode === 'update' ? handleUpdate : handleAdd}
           >
-            Update Feature
+            {mode === 'update' ? 'Update Feature' : 'Add Feature'}
           </button>
         </div>
 
-        <DangerZone label="feature" onDelete={handleDelete} />
+        {mode === 'update' && <DangerZone label="feature" onDelete={handleDelete} />}
       </div>
     </div>
   );

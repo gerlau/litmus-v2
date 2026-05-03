@@ -12,6 +12,17 @@ export async function getFeature(id: string): Promise<Feature | null> {
   return q.getById(id);
 }
 
+export async function createFeature(
+  feature: Omit<Feature, 'createdAt' | 'updatedAt'>,
+): Promise<Feature> {
+  const now = new Date();
+  const full: Feature = { ...feature, createdAt: now, updatedAt: now };
+  const result = await q.insert(full);
+  revalidatePath('/features');
+  revalidatePath('/');
+  return result;
+}
+
 export async function updateFeature(
   id: string,
   changes: Partial<Omit<Feature, 'id' | 'createdAt'>>,
