@@ -127,3 +127,5 @@ input, textarea, select {
 
 /* Posture bar */
 .posture-bar { background: linear-gradient(90deg, #34d399, #10b981); }
+
+@keyframes spin { to { transform: rotate(360deg); } }

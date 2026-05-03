@@ -16,7 +16,7 @@ function toRows(feature: Feature): DemoRow[] {
 
 function toSteps(feature: Feature): Step[] {
   const item = feature.demonstration.find(d => d.type === 'steps') as DemoStepsItem | undefined;
-  return item?.items.map(s => ({ text: s.text, file: '' })) ?? [];
+  return item?.items.map(s => ({ text: s.text, file: s.images[0] ?? '' })) ?? [];
 }
 
 interface Props {
@@ -55,7 +55,7 @@ export default function FeaturesPage({ features }: Props) {
         id: 'steps',
         type: 'steps' as const,
         label: 'Demonstration',
-        items: steps.map((s, i) => ({ id: `step_${i + 1}`, text: s.text, images: [] as string[] })),
+        items: steps.map((s, i) => ({ id: `step_${i + 1}`, text: s.text, images: s.file ? [s.file] : [] })),
       },
     ];
     await updateFeature(featureId, { description: desc, additionalContext: ctx || undefined, demonstration });
@@ -107,7 +107,7 @@ export default function FeaturesPage({ features }: Props) {
         <DemoTable rows={rows} setRows={setRows} />
 
         <div className="text-[11px] font-bold uppercase tracking-[0.1em] mt-5 mb-2.5" style={{ color: 'var(--text-2)' }}>Steps</div>
-        <StepsBlock steps={steps} setSteps={setSteps} />
+        <StepsBlock steps={steps} setSteps={setSteps} context="features" />
 
         <div className="mt-5">
           <button

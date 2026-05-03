@@ -55,7 +55,7 @@ export default function RiskRow({ risk, features, appId, finding, status, onTogg
         id: 'steps',
         type: 'steps' as const,
         label: 'Steps',
-        items: steps.map((s, i) => ({ id: `step_${i + 1}`, text: s.text, images: [] as string[] })),
+        items: steps.map((s, i) => ({ id: `step_${i + 1}`, text: s.text, images: s.file ? [s.file] : [] })),
       },
     ];
     await upsertFinding(appId, risk.id, status, observation);
@@ -136,7 +136,7 @@ export default function RiskRow({ risk, features, appId, finding, status, onTogg
           </div>
 
           <div className="text-[11px] font-bold uppercase tracking-[0.1em] mt-4 mb-2.5" style={{ color: 'var(--text-2)' }}>Steps</div>
-          <StepsBlock steps={steps} setSteps={setSteps} />
+          <StepsBlock steps={steps} setSteps={setSteps} context="findings" />
 
           <div className="flex gap-2.5 mt-4">
             <button

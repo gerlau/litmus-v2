@@ -590,9 +590,6 @@ video {
 .block {
   display: block;
 }
-.inline {
-  display: inline;
-}
 .flex {
   display: flex;
 }
@@ -1186,6 +1183,9 @@ input, textarea, select {
 
 /* Posture bar */
 .posture-bar { background: linear-gradient(90deg, #34d399, #10b981); }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
 .hover\:bg-\[var\(--surface-2\)\]:hover {
   background-color: var(--surface-2);
 }

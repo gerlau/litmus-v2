@@ -16,7 +16,7 @@ function toRows(risk: Risk): DemoRow[] {
 
 function toSteps(risk: Risk): Step[] {
   const item = risk.demonstration.find(d => d.type === 'steps') as DemoStepsItem | undefined;
-  return item?.items.map(s => ({ text: s.text, file: '' })) ?? [];
+  return item?.items.map(s => ({ text: s.text, file: s.images[0] ?? '' })) ?? [];
 }
 
 const selectCls = 'w-full rounded-lg px-3 py-2.5 text-[13.5px] field-select appearance-none';
@@ -61,7 +61,7 @@ export default function RisksPage({ features, risks }: Props) {
         id: 'steps',
         type: 'steps' as const,
         label: 'Demonstration',
-        items: steps.map((s, i) => ({ id: `step_${i + 1}`, text: s.text, images: [] as string[] })),
+        items: steps.map((s, i) => ({ id: `step_${i + 1}`, text: s.text, images: s.file ? [s.file] : [] })),
       },
     ];
     await updateRisk(riskId, { description: desc, goal, demonstration });
@@ -113,7 +113,7 @@ export default function RisksPage({ features, risks }: Props) {
         <DemoTable rows={rows} setRows={setRows} />
 
         <div className="text-[11px] font-bold uppercase tracking-[0.1em] mt-5 mb-2.5" style={{ color: 'var(--text-2)' }}>Steps</div>
-        <StepsBlock steps={steps} setSteps={setSteps} />
+        <StepsBlock steps={steps} setSteps={setSteps} context="risks" />
 
         <div className="mt-5">
           <button
