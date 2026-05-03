@@ -1,5 +1,4 @@
 {
-  "/features/page": "app/features/page.js",
-  "/api/upload/route": "app/api/upload/route.js",
-  "/risks/page": "app/risks/page.js"
+  "/risks/page": "app/risks/page.js",
+  "/api/upload/route": "app/api/upload/route.js"
 }

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Feature, Risk, DemoTableItem, DemoStepsItem } from '@/shared/types/domain';
 import { type DemoRow, type Step } from '@/shared/utils/data';
-import { updateRisk, deleteRisk } from '@/lib/actions/risks';
+import { createRisk, updateRisk, deleteRisk } from '@/lib/actions/risks';
 import DemoTable from '@/shared/components/DemoTable';
 import StepsBlock from '@/shared/components/StepsBlock';
 import DangerZone from '@/shared/components/DangerZone';
@@ -27,30 +27,67 @@ interface Props {
   risks: Risk[];
 }
 
+const NEW = '__new__';
+
 export default function RisksPage({ features, risks }: Props) {
   const router = useRouter();
-  const first = risks[0];
 
-  const [riskId, setRiskId] = useState(first?.id ?? '');
-  const [featureId, setFeatureId] = useState(first?.featureId ?? '');
-  const [desc, setDesc] = useState(first?.description ?? '');
-  const [goal, setGoal] = useState(first?.goal ?? '');
-  const [rows, setRows] = useState<DemoRow[]>(() => first ? toRows(first) : []);
-  const [steps, setSteps] = useState<Step[]>(() => first ? toSteps(first) : []);
+  const firstFeature = features[0];
+  const firstFeatureRisks = risks.filter(r => r.featureId === firstFeature?.id);
+  const firstRisk = firstFeatureRisks[0];
 
-  function selectRisk(id: string) {
-    const r = risks.find(x => x.id === id);
-    if (!r) return;
-    setRiskId(id);
-    setFeatureId(r.featureId);
+  const [selectedFeatureId, setSelectedFeatureId] = useState(firstFeature?.id ?? '');
+  const [isNew, setIsNew] = useState(!firstRisk);
+  const [riskId, setRiskId] = useState(firstRisk?.id ?? '');
+  const [title, setTitle] = useState(firstRisk?.title ?? '');
+  const [desc, setDesc] = useState(firstRisk?.description ?? '');
+  const [goal, setGoal] = useState(firstRisk?.goal ?? '');
+  const [rows, setRows] = useState<DemoRow[]>(() => firstRisk ? toRows(firstRisk) : []);
+  const [steps, setSteps] = useState<Step[]>(() => firstRisk ? toSteps(firstRisk) : []);
+
+  const featureRisks = risks.filter(r => r.featureId === selectedFeatureId);
+
+  function loadRisk(r: Risk) {
+    setIsNew(false);
+    setRiskId(r.id);
+    setTitle(r.title);
     setDesc(r.description);
     setGoal(r.goal);
     setRows(toRows(r));
     setSteps(toSteps(r));
   }
 
-  async function handleUpdate() {
-    const demonstration = [
+  function enterNewMode() {
+    setIsNew(true);
+    setRiskId('');
+    setTitle('');
+    setDesc('');
+    setGoal('');
+    setRows([]);
+    setSteps([]);
+  }
+
+  function selectFeature(id: string) {
+    setSelectedFeatureId(id);
+    const forFeature = risks.filter(r => r.featureId === id);
+    if (forFeature.length > 0) {
+      loadRisk(forFeature[0]);
+    } else {
+      enterNewMode();
+    }
+  }
+
+  function selectRiskOrNew(val: string) {
+    if (val === NEW) {
+      enterNewMode();
+    } else {
+      const r = risks.find(x => x.id === val);
+      if (r) loadRisk(r);
+    }
+  }
+
+  function buildDemonstration() {
+    return [
       {
         id: 'setup_table',
         type: 'table' as const,
@@ -64,14 +101,28 @@ export default function RisksPage({ features, risks }: Props) {
         items: steps.map((s, i) => ({ id: `step_${i + 1}`, text: s.text, images: s.file ? [s.file] : [] })),
       },
     ];
-    await updateRisk(riskId, { description: desc, goal, demonstration });
+  }
+
+  async function handleSave() {
+    const demonstration = buildDemonstration();
+    if (isNew) {
+      const created = await createRisk({ featureId: selectedFeatureId, title, description: desc, goal, demonstration });
+      setIsNew(false);
+      setRiskId(created.id);
+    } else {
+      await updateRisk(riskId, { title, description: desc, goal, demonstration });
+    }
     router.refresh();
   }
 
   async function handleDelete() {
     await deleteRisk(riskId);
-    const remaining = risks.filter(r => r.id !== riskId);
-    if (remaining.length > 0) selectRisk(remaining[0].id);
+    const remaining = featureRisks.filter(r => r.id !== riskId);
+    if (remaining.length > 0) {
+      loadRisk(remaining[0]);
+    } else {
+      enterNewMode();
+    }
     router.refresh();
   }
 
@@ -86,17 +137,23 @@ export default function RisksPage({ features, risks }: Props) {
         <h3 className="text-[15px] font-semibold m-0 mb-[18px]" style={{ color: 'var(--text)' }}>Add / Update Risk</h3>
 
         <div className="flex flex-col gap-1.5 mb-3.5">
-          <label className="text-[12px] font-medium" style={{ color: 'var(--text-2)' }}>Risk ID</label>
-          <select className={selectCls} style={selectStyle} value={riskId} onChange={e => selectRisk(e.target.value)}>
-            {risks.map(r => <option key={r.id} value={r.id}>{r.id} — {r.title}</option>)}
+          <label className="text-[12px] font-medium" style={{ color: 'var(--text-2)' }}>Feature</label>
+          <select className={selectCls} style={selectStyle} value={selectedFeatureId} onChange={e => selectFeature(e.target.value)}>
+            {features.map(f => <option key={f.id} value={f.id}>{f.id} — {f.name}</option>)}
           </select>
         </div>
 
         <div className="flex flex-col gap-1.5 mb-3.5">
-          <label className="text-[12px] font-medium" style={{ color: 'var(--text-2)' }}>Feature ID</label>
-          <select className={selectCls} style={selectStyle} value={featureId} onChange={e => setFeatureId(e.target.value)}>
-            {features.map(f => <option key={f.id} value={f.id}>{f.id} — {f.name}</option>)}
+          <label className="text-[12px] font-medium" style={{ color: 'var(--text-2)' }}>Risk</label>
+          <select className={selectCls} style={selectStyle} value={isNew ? NEW : riskId} onChange={e => selectRiskOrNew(e.target.value)}>
+            <option value={NEW}>— New Risk —</option>
+            {featureRisks.map(r => <option key={r.id} value={r.id}>{r.id} — {r.title}</option>)}
           </select>
+        </div>
+
+        <div className="flex flex-col gap-1.5 mb-3.5">
+          <label className="text-[12px] font-medium" style={{ color: 'var(--text-2)' }}>Title</label>
+          <input className="w-full rounded-lg px-3 py-2.5 text-[13.5px]" style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)' }} value={title} onChange={e => setTitle(e.target.value)} placeholder="Short name for this risk" />
         </div>
 
         <div className="flex flex-col gap-1.5 mb-3.5">
@@ -119,13 +176,13 @@ export default function RisksPage({ features, risks }: Props) {
           <button
             className="w-full py-3.5 rounded-lg text-[12.5px] font-semibold uppercase tracking-widest"
             style={{ background: 'var(--ink)', color: '#fff', border: 'none', cursor: 'pointer' }}
-            onClick={handleUpdate}
+            onClick={handleSave}
           >
-            Update Risk
+            {isNew ? 'Add Risk' : 'Update Risk'}
           </button>
         </div>
 
-        <DangerZone label="risk" onDelete={handleDelete} />
+        {!isNew && <DangerZone label="risk" onDelete={handleDelete} />}
       </div>
     </div>
   );
