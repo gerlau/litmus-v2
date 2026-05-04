@@ -1,3 +1,5 @@
+<img width="1376" height="768" alt="568898845-baa7f850-9b1f-4096-8a32-707d99b7c468" src="https://github.com/user-attachments/assets/23577d3a-9bc2-469b-9829-5be5a35e3c29" />
+
 # 🧭 About
 
 Litmus is a security posture dashboard and practitioner tooling for mobile application assessments. Stakeholders use the Dashboard to review portfolio-level risk summaries and prioritization insights. Security practitioners use the Features, Risks, Apps, and Findings pages to document and maintain assessment data across multiple mobile applications.
