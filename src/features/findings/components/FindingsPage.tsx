@@ -23,7 +23,7 @@ export default function FindingsPage({ apps, features, risks, allFindings }: Pro
 
   function getStatus(riskId: string): FindingStatus {
     if (riskId in optimistic) return optimistic[riskId];
-    return appFindings.find(f => f.riskId === riskId)?.status ?? 'at-risk';
+    return appFindings.find(f => f.riskId === riskId)?.status ?? 'unclassified';
   }
 
   function getFinding(riskId: string): Finding | null {
@@ -32,7 +32,7 @@ export default function FindingsPage({ apps, features, risks, allFindings }: Pro
 
   function toggle(riskId: string) {
     const current = getStatus(riskId);
-    const next: FindingStatus = current === 'reduced' ? 'at-risk' : 'reduced';
+    const next: FindingStatus = current === 'reduced' ? 'at-risk' : current === 'at-risk' ? 'reduced' : 'at-risk';
     setOptimistic(o => ({ ...o, [riskId]: next }));
     startTransition(async () => {
       await upsertFinding(appId, riskId, next);
@@ -46,8 +46,10 @@ export default function FindingsPage({ apps, features, risks, allFindings }: Pro
   }
 
   const reducedCount = risks.filter(r => getStatus(r.id) === 'reduced').length;
-  const total = risks.length;
-  const pct = total > 0 ? Math.round((reducedCount / total) * 100) : 0;
+  const atRiskCount = risks.filter(r => getStatus(r.id) === 'at-risk').length;
+  const classifiedCount = reducedCount + atRiskCount;
+  const unclassifiedCount = risks.length - classifiedCount;
+  const pct = classifiedCount > 0 ? Math.round((reducedCount / classifiedCount) * 100) : 0;
 
   const byFeature = risks.reduce<Record<string, Risk[]>>((acc, r) => {
     if (!acc[r.featureId]) acc[r.featureId] = [];
@@ -74,7 +76,8 @@ export default function FindingsPage({ apps, features, risks, allFindings }: Pro
             {[
               { label: 'Posture', value: `${pct}%`, color: 'var(--text)' },
               { label: 'Reduced', value: reducedCount, color: 'var(--success)' },
-              { label: 'At Risk', value: total - reducedCount, color: 'var(--danger)' },
+              { label: 'At Risk', value: atRiskCount, color: 'var(--danger)' },
+              { label: 'Unclassified', value: unclassifiedCount, color: 'var(--text-3)' },
             ].map(s => (
               <div key={s.label}>
                 <div className="text-[11px] font-bold uppercase tracking-widest mb-0.5" style={{ color: 'var(--text-3)' }}>{s.label}</div>

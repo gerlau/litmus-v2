@@ -39,12 +39,13 @@ export default function RiskRow({ risk, features, appId, finding, status, onTogg
   ]);
 
   const featureName = features.find(f => f.id === risk.featureId)?.name ?? '';
-  const on = status === 'reduced';
+  const on = status === 'reduced' ? true : status === 'at-risk' ? false : null;
 
   async function handleSave() {
     setSaveStatus('saving');
+    const effectiveStatus = status === 'unclassified' ? 'at-risk' as const : status;
     const observation = [
-      { id: 'risk_status' as const, text: status },
+      { id: 'risk_status' as const, text: effectiveStatus },
       { id: 'description_status' as const, label: 'Description', text: descMet === 'met' ? 'met' as const : 'not-met' as const },
       { id: 'goal_status' as const, label: 'Goal', text: goalMet === 'met' ? 'met' as const : 'not-met' as const },
       {
@@ -60,7 +61,7 @@ export default function RiskRow({ risk, features, appId, finding, status, onTogg
         items: steps.map((s, i) => ({ id: `step_${i + 1}`, text: s.text, images: s.file ? [s.file] : [] })),
       },
     ];
-    await upsertFinding(appId, risk.id, status, observation);
+    await upsertFinding(appId, risk.id, effectiveStatus, observation);
     router.refresh();
     setSaveStatus('saved');
     setTimeout(() => { setOpen(false); setSaveStatus('idle'); }, 1500);

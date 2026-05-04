@@ -19,6 +19,7 @@ export async function upsertFinding(
   status: FindingStatus,
   observation?: ObservationItem[],
 ): Promise<Finding> {
+  if (status === 'unclassified') throw new Error('Cannot persist unclassified finding status');
   const now = new Date();
   const finding: Finding = {
     id: randomUUID(),

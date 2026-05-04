@@ -1163,6 +1163,8 @@ input, textarea, select {
 }
 .risk-switch.on { background: var(--success-soft); }
 .risk-switch.on::after { transform: translateX(18px); background: var(--success); }
+.risk-switch.unclassified { background: var(--surface-3); }
+.risk-switch.unclassified::after { background: var(--text-3); }
 
 /* Caret animation */
 .caret { transition: transform 0.15s; }

@@ -33,7 +33,7 @@ export interface App {
   // risks and atRisk are computed at query time — not stored
 }
 
-export type FindingStatus = 'at-risk' | 'reduced';
+export type FindingStatus = 'at-risk' | 'reduced' | 'unclassified';
 
 export interface Finding {
   id: string;                      // UUID v4

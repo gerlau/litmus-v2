@@ -1,8 +1,8 @@
-// File: C:\Users\youredoingok\Documents\GitHub\litmus-v2\src\app\risks\page.tsx
-import * as entry from '../../../../src/app/risks/page.js'
+// File: C:\Users\youredoingok\Documents\GitHub\litmus-v2\src\app\features\page.tsx
+import * as entry from '../../../../src/app/features/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 
-type TEntry = typeof import('../../../../src/app/risks/page.js')
+type TEntry = typeof import('../../../../src/app/features/page.js')
 
 // Check that the entry is a valid entry
 checkFields<Diff<{

@@ -14,7 +14,9 @@ export default function AppRail({ appId, apps, risks, findings }: Props) {
   const app = apps.find(a => a.id === appId) ?? apps[0];
   const appFindings = findings.filter(f => f.appId === app?.id);
   const reduced = appFindings.filter(f => f.status === 'reduced').length;
-  const pct = risks.length > 0 ? Math.round((reduced / risks.length) * 100) : 0;
+  const atRisk = appFindings.filter(f => f.status === 'at-risk').length;
+  const classified = reduced + atRisk;
+  const pct = classified > 0 ? Math.round((reduced / classified) * 100) : 0;
 
   if (!app) return null;
 
@@ -36,25 +38,27 @@ export default function AppRail({ appId, apps, risks, findings }: Props) {
 
       <div className="text-[11px] font-bold uppercase tracking-widest mb-1.5" style={{ color: 'var(--text-3)' }}>Risk checklist</div>
       {risks.map(r => {
-        const finding = appFindings.find(f => f.riskId === r.id);
-        const on = finding?.status === 'reduced';
+        const status = appFindings.find(f => f.riskId === r.id)?.status ?? 'unclassified';
+        const isReduced = status === 'reduced';
+        const isAtRisk = status === 'at-risk';
         return (
           <div key={r.id} className="flex items-center gap-2.5 py-2.5" style={{ borderBottom: '1px solid var(--border)', fontSize: 13 }}>
             <div
               className="w-4 h-4 rounded grid place-items-center flex-shrink-0"
               style={{
-                border: on ? 'none' : '1.5px solid var(--border-strong)',
-                background: on ? 'var(--ink)' : 'transparent',
-                color: on ? '#fff' : 'transparent',
+                border: isReduced ? 'none' : `1.5px solid ${isAtRisk ? 'var(--border-strong)' : 'var(--border)'}`,
+                background: isReduced ? 'var(--ink)' : 'transparent',
+                color: isReduced ? '#fff' : 'transparent',
               }}
             >
-              {on && <Icons.check />}
+              {isReduced && <Icons.check />}
             </div>
-            <div className="flex-1" style={{ textDecoration: on ? 'line-through' : 'none', color: on ? 'var(--text-3)' : 'var(--text)' }}>{r.title}</div>
-            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={on
-              ? { background: 'var(--success-soft)', color: 'var(--success)' }
-              : { background: 'var(--danger-soft)', color: 'var(--danger)' }
-            }>{on ? 'Reduced' : 'At risk'}</span>
+            <div className="flex-1" style={{ textDecoration: isReduced ? 'line-through' : 'none', color: isReduced ? 'var(--text-3)' : 'var(--text)' }}>{r.title}</div>
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={
+              isReduced ? { background: 'var(--success-soft)', color: 'var(--success)' }
+              : isAtRisk ? { background: 'var(--danger-soft)', color: 'var(--danger)' }
+              : { background: 'var(--surface-3)', color: 'var(--text-3)' }
+            }>{isReduced ? 'Reduced' : isAtRisk ? 'At risk' : 'Unclassified'}</span>
           </div>
         );
       })}
