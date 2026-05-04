@@ -1,54 +1,75 @@
-# Mobile Security Assessment
+# 🧭 About
 
-## Overview
-Security posture dashboard and practitioner tooling for mobile application assessments. Stakeholders use the Dashboard to review portfolio-level risk summaries and prioritization insights. Security practitioners use Features, Risks, Apps, and Findings pages to document and maintain assessment data across multiple mobile applications.
+Litmus is a security posture dashboard and practitioner tooling for mobile application assessments. Stakeholders use the Dashboard to review portfolio-level risk summaries and prioritization insights. Security practitioners use the Features, Risks, Apps, and Findings pages to document and maintain assessment data across multiple mobile applications.
 
-## Tech Stack
-- Next.js (App Router)
-- TypeScript
-- Tailwind CSS
+**Tech Stack**
+- [Next.js 14](https://nextjs.org/) (App Router)
+- [TypeScript](https://www.typescriptlang.org/)
+- [Tailwind CSS](https://tailwindcss.com/)
+- [SQLite](https://www.sqlite.org/) via [better-sqlite3](https://github.com/WiseLibs/better-sqlite3) + [Knex](https://knexjs.org/)
 
-## Getting Started
+---
 
-### Prerequisites
-- Node.js (>= 18)
+# 👩‍💻 Developer Setup
 
-### Installation
-```bash
-npm install
+Everything you need to run the project locally.
+
+## 📦 Prerequisites
+
+- [Node.js](https://nodejs.org/) >= 18
+
+## 🚀 Getting Started
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/your-org/litmus-v2.git
+   cd litmus-v2
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Start the development server**
+   ```bash
+   npm run dev
+   ```
+   Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+4. **Build for production**
+   ```bash
+   npm run build
+   npm start
+   ```
+
+## 📂 Project Structure
+
+```
+src/
+├── app/        – Next.js routing (pages, API routes, layout)
+├── features/   – Feature-based modules (components, hooks, types)
+├── lib/        – Server actions and database utilities
+└── shared/     – Reusable components, types, and utilities
 ```
 
-### Development
-```bash
-npm run dev
-```
+> **Note:** `src/app/features/` is the `/features` route, not to be confused with `src/features/` which is the feature-module architecture directory.
 
-### Build
-```bash
-npm run build
-```
+---
 
-### Start
-```bash
-npm start
-```
+# 🤝 Contributing
 
-## Project Structure
+Contributions are welcome. Follow the standard GitHub workflow:
 
-* `src/app` – Next.js routing (pages, layout)
-* `src/features` – Feature-based modules (components, hooks, types)
-* `src/shared` – Reusable components and utilities
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feat/your-feature`)
+3. Commit your changes
+4. Open a pull request
 
-## Notes / Assumptions
+Please keep contributions scoped to the project's mobile security assessment domain.
 
-* All data is placeholder/mock — defined in `src/shared/utils/data.ts`
-* Light/dark theme is toggled via the sidebar button; preference persists in `localStorage`
-* Theme is applied via `data-theme="dark"` on `<html>` to avoid flash of unstyled content
-* The Findings page groups risks by feature and tracks per-app At Risk / Reduced state locally via `useState`
-* Form pages (Features, Risks, Apps) do not persist edits — state is local only
-* `src/app/features/page.tsx` maps to `/features` (not to be confused with the `src/features/` directory which is the feature-module architecture pattern)
+---
 
-## Scope
+# 📄 License
 
-* Frontend-only implementation
-* No backend, API routes, or external services included
+This project is licensed under the [MIT License](https://opensource.org/licenses/MIT).
