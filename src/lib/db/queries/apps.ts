@@ -50,6 +50,16 @@ export async function getById(id: string): Promise<App | null> {
   return row ? deserialize(row) : null;
 }
 
+export async function nextId(): Promise<string> {
+  await init();
+  const rows = await db<{ id: string }>('apps').select('id');
+  const max = rows.reduce((acc, { id }) => {
+    const m = id.match(/^A-(\d+)$/);
+    return m ? Math.max(acc, parseInt(m[1], 10)) : acc;
+  }, 0);
+  return `A-${String(max + 1).padStart(3, '0')}`;
+}
+
 export async function insert(app: App): Promise<App> {
   await init();
   await db('apps').insert(serialize(app));

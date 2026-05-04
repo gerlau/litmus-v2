@@ -12,8 +12,9 @@ export async function getApp(id: string): Promise<App | null> {
   return q.getById(id);
 }
 
-export async function createApp(app: App): Promise<App> {
-  const result = await q.insert(app);
+export async function createApp(app: Omit<App, 'id'>): Promise<App> {
+  const id = await q.nextId();
+  const result = await q.insert({ ...app, id });
   revalidatePath('/apps');
   revalidatePath('/');
   return result;

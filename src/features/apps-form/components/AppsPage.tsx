@@ -18,7 +18,6 @@ export default function AppsPage({ apps }: Props) {
   const router = useRouter();
   const [appId, setAppId] = useState(apps[0]?.id ?? '');
   const [isNew, setIsNew] = useState(false);
-  const [newId] = useState(() => crypto.randomUUID());
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'deleting' | 'deleted'>('idle');
 
   const selected = apps.find(a => a.id === appId) ?? apps[0];
@@ -43,7 +42,7 @@ export default function AppsPage({ apps }: Props) {
   async function handleSave() {
     setStatus('saving');
     if (isNew) {
-      await createApp({ id: newId, name, agency, version, sector, cisos, createdAt: new Date(), updatedAt: new Date() });
+      await createApp({ name, agency, version, sector, cisos, createdAt: new Date(), updatedAt: new Date() });
       setIsNew(false);
     } else {
       await updateApp(appId, { name, agency, version, sector, cisos });
@@ -76,13 +75,23 @@ export default function AppsPage({ apps }: Props) {
         <div className="flex flex-col gap-1.5 mb-5">
           <div className="flex items-center justify-between mb-1">
             <label className="text-[12px] font-medium" style={{ color: 'var(--text-2)' }}>Select Application</label>
-            <button
-              className="text-[12px] font-medium"
-              style={{ color: 'var(--text-2)', background: 'none', border: 'none', cursor: 'pointer' }}
-              onClick={() => { setIsNew(true); setName(''); setAgency(''); setVersion(''); setSector(SECTORS[0]); setCisos([]); }}
-            >
-              + New
-            </button>
+            {isNew ? (
+              <button
+                className="text-[12px] font-medium"
+                style={{ color: 'var(--text-2)', background: 'none', border: 'none', cursor: 'pointer' }}
+                onClick={() => { setIsNew(false); selectApp(appId); }}
+              >
+                Cancel
+              </button>
+            ) : (
+              <button
+                className="text-[12px] font-medium"
+                style={{ color: 'var(--text-2)', background: 'none', border: 'none', cursor: 'pointer' }}
+                onClick={() => { setIsNew(true); setName(''); setAgency(''); setVersion(''); setSector(SECTORS[0]); setCisos([]); }}
+              >
+                + New
+              </button>
+            )}
           </div>
           {!isNew && (
             <select
@@ -158,7 +167,7 @@ export default function AppsPage({ apps }: Props) {
           )}
         </div>
 
-        <DangerZone label="application" onDelete={handleDelete} />
+        {!isNew && <DangerZone label="application" onDelete={handleDelete} />}
       </div>
     </div>
   );
