@@ -1,4 +1,9 @@
+'use client';
+
+import { useRef } from 'react';
+import html2canvas from 'html2canvas';
 import type { App, Risk, Finding } from '@/shared/types/domain';
+import { Icons } from '@/shared/components/Icon';
 
 interface Props {
   apps: App[];
@@ -9,12 +14,41 @@ interface Props {
 
 export default function DivergentChart({ apps, risks, findings, activeRisk }: Props) {
   const max = apps.length || 1;
+  const chartRef = useRef<HTMLDivElement>(null);
+
+  async function handleExport() {
+    if (!chartRef.current) return;
+    const canvas = await html2canvas(chartRef.current, {
+      useCORS: true,
+      scale: 2,
+      onclone: (_doc, el) => {
+        el.querySelectorAll<HTMLElement>('[style]').forEach(node => {
+          if (node.style.background.includes('oklch')) node.style.background = 'transparent';
+          if (node.style.backgroundColor.includes('oklch')) node.style.backgroundColor = 'transparent';
+        });
+      },
+    });
+    const link = document.createElement('a');
+    link.download = 'risk-distribution-chart.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  }
 
   return (
-    <div className="rounded-[14px]" style={{ background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}>
-      <div className="px-[22px] py-4" style={{ borderBottom: '1px solid var(--border)' }}>
-        <h3 className="text-[14.5px] font-semibold m-0" style={{ color: 'var(--text)' }}>Risk distribution across apps</h3>
-        <div className="text-[12.5px]" style={{ color: 'var(--text-3)' }}>At Risk ← • → Reduced Risk</div>
+    <div ref={chartRef} className="rounded-[14px]" style={{ background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}>
+      <div className="px-[22px] py-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border)' }}>
+        <div>
+          <h3 className="text-[14.5px] font-semibold m-0" style={{ color: 'var(--text)' }}>Risk distribution across apps</h3>
+          <div className="text-[12.5px]" style={{ color: 'var(--text-3)' }}>At Risk ← • → Reduced Risk</div>
+        </div>
+        <button
+          onClick={handleExport}
+          title="Export as image"
+          className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-medium"
+          style={{ background: 'var(--surface-3)', border: '1px solid var(--border)', color: 'var(--text-2)', cursor: 'pointer' }}
+        >
+          <Icons.download /> Export
+        </button>
       </div>
       <div className="p-[22px]">
         {risks.map(r => {

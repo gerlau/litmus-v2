@@ -1,5 +1,7 @@
 'use client';
 
+import { useRef } from 'react';
+import html2canvas from 'html2canvas';
 import type { App, Risk, Finding } from '@/shared/types/domain';
 import { Icons } from '@/shared/components/Icon';
 
@@ -12,7 +14,26 @@ interface Props {
 }
 
 export default function AppsBarChart({ apps, risks, findings, selectedApp, onSelect }: Props) {
+  const chartRef = useRef<HTMLDivElement>(null);
   const totalRisks = risks.length;
+
+  async function handleExport() {
+    if (!chartRef.current) return;
+    const canvas = await html2canvas(chartRef.current, {
+      useCORS: true,
+      scale: 2,
+      onclone: (_doc, el) => {
+        el.querySelectorAll<HTMLElement>('[style]').forEach(node => {
+          if (node.style.background.includes('oklch')) node.style.background = 'transparent';
+          if (node.style.backgroundColor.includes('oklch')) node.style.backgroundColor = 'transparent';
+        });
+      },
+    });
+    const link = document.createElement('a');
+    link.download = 'apps-by-risk-count.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  }
 
   const appsWithStats = apps.map(a => {
     const appFindings = findings.filter(f => f.appId === a.id);
@@ -24,7 +45,7 @@ export default function AppsBarChart({ apps, risks, findings, selectedApp, onSel
   const max = Math.max(...appsWithStats.map(a => a.atRisk), 1);
 
   return (
-    <div className="rounded-[14px]" style={{ background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}>
+    <div ref={chartRef} className="rounded-[14px]" style={{ background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}>
       <div className="flex items-center gap-3 px-[22px] py-4" style={{ borderBottom: '1px solid var(--border)' }}>
         <div>
           <h3 className="text-[14.5px] font-semibold m-0" style={{ color: 'var(--text)' }}>Apps by open risk count</h3>
@@ -32,7 +53,7 @@ export default function AppsBarChart({ apps, risks, findings, selectedApp, onSel
         </div>
         <div className="ml-auto flex gap-2">
           <button className="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-[12px] font-medium" style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text-2)' }}>Sort: At Risk</button>
-          <button className="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-[12px] font-medium" style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text-2)' }}>
+          <button onClick={handleExport} className="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-[12px] font-medium" style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text-2)', cursor: 'pointer' }}>
             <Icons.download /> Export
           </button>
         </div>
