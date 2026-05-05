@@ -33,13 +33,21 @@ Everything you need to run the project locally.
    npm install
    ```
 
-3. **Start the development server**
+3. **Set up environment variables**
+   ```bash
+   cp .env.local.example .env.local
+   ```
+   Edit `.env.local` and set `LITMUS_USE_MOCK`:
+   - `true` — connects to `~/.litmus-v2/data.db` (pre-seeded mock data, good for exploring the app)
+   - `false` — connects to `~/.litmus-v2/real.db` (blank database, for real assessments)
+
+4. **Start the development server**
    ```bash
    npm run dev
    ```
    Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-4. **Build for production**
+5. **Build for production**
    ```bash
    npm run build
    npm start
@@ -56,6 +64,18 @@ src/
 ```
 
 > **Note:** `src/app/features/` is the `/features` route, not to be confused with `src/features/` which is the feature-module architecture directory.
+
+## 💾 Data Storage
+
+All persistent data is stored locally on the machine running the server, under `~/.litmus-v2/`.
+
+| What | Path |
+|------|------|
+| Mock database | `~/.litmus-v2/data.db` (pre-seeded SQLite) |
+| Real database | `~/.litmus-v2/real.db` (blank SQLite) |
+| Uploaded files | `~/.litmus-v2/uploads/{mode}/{context}/` |
+
+`{mode}` is `mock` or `real` (matches `LITMUS_USE_MOCK`). `{context}` is `features`, `risks`, or `findings`.
 
 ---
 
