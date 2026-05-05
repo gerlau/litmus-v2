@@ -6,9 +6,12 @@ import * as fs from 'fs';
 const dbDir = path.join(os.homedir(), '.litmus-v2');
 fs.mkdirSync(dbDir, { recursive: true });
 
+const useMock = process.env.LITMUS_USE_MOCK === 'true';
+const dbFilename = useMock ? 'data.db' : 'real.db';
+
 export const db = knex({
   client: 'better-sqlite3',
-  connection: { filename: path.join(dbDir, 'data.db') },
+  connection: { filename: path.join(dbDir, dbFilename) },
   useNullAsDefault: true,
   pool: {
     afterCreate(
@@ -33,11 +36,13 @@ export function init(): Promise<void> {
   if (!_initPromise) {
     _initPromise = (async () => {
       await db.migrate.latest({ migrationSource });
-      const rows = await db('features').count('* as count');
-      const isEmpty = Number((rows[0] as { count: string | number }).count) === 0;
-      if (isEmpty) {
-        const { seed } = await import('./seed');
-        await seed(db);
+      if (useMock) {
+        const rows = await db('features').count('* as count');
+        const isEmpty = Number((rows[0] as { count: string | number }).count) === 0;
+        if (isEmpty) {
+          const { seed } = await import('./seed');
+          await seed(db);
+        }
       }
     })();
   }
