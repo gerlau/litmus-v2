@@ -83,3 +83,6 @@ export interface EvalItem {
   label: string;
   text: 'met' | 'not-met';
 }
+
+export interface DemoRow { k: string; v: string; }
+export interface Step { text: string; file: string; }

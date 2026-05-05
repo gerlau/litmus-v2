@@ -2,8 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import type { Risk, Feature, Finding, FindingStatus } from '@/shared/types/domain';
-import { type DemoRow, type Step } from '@/shared/utils/data';
+import type { Risk, Feature, Finding, FindingStatus, DemoRow, Step } from '@/shared/types/domain';
 import { upsertFinding } from '@/lib/actions/findings';
 import { Icons } from '@/shared/components/Icon';
 import StepsBlock from '@/shared/components/StepsBlock';

@@ -1,6 +1,6 @@
 'use client';
 
-import { DemoRow } from '@/shared/utils/data';
+import { type DemoRow } from '@/shared/types/domain';
 
 interface DemoTableProps {
   rows: DemoRow[];

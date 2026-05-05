@@ -27,9 +27,6 @@ export interface Risk {
 
 export type FindingsMap = Record<string, Record<string, FindingStatus>>;
 
-export interface DemoRow { k: string; v: string; }
-export interface Step { text: string; file: string; }
-export interface CisoContact { name: string; title: string; email: string; phone: string; }
 
 export const APPS: App[] = [
   { id: 'A-001', name: 'NorthBank Mobile', sector: 'Financial Services', agency: 'NorthBank Holdings', version: '4.12.1', risks: 18, atRisk: 7 },

@@ -2,8 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import type { Feature, DemoTableItem, DemoStepsItem } from '@/shared/types/domain';
-import { type DemoRow, type Step } from '@/shared/utils/data';
+import type { Feature, DemoTableItem, DemoStepsItem, DemoRow, Step } from '@/shared/types/domain';
 import { updateFeature, deleteFeature, createFeature } from '@/lib/actions/features';
 import DemoTable from '@/shared/components/DemoTable';
 import StepsBlock from '@/shared/components/StepsBlock';

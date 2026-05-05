@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Step } from '@/shared/utils/data';
+import { type Step } from '@/shared/types/domain';
 import { Icons } from './Icon';
 
 type UploadContext = 'features' | 'risks' | 'findings';
