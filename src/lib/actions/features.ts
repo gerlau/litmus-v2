@@ -20,6 +20,7 @@ export async function createFeature(
   const result = await q.insert(full);
   revalidatePath('/features');
   revalidatePath('/');
+  revalidatePath('/', 'layout');
   return result;
 }
 
@@ -30,6 +31,7 @@ export async function updateFeature(
   const result = await q.update(id, changes);
   revalidatePath('/features');
   revalidatePath('/');
+  revalidatePath('/', 'layout');
   return result;
 }
 
@@ -39,5 +41,6 @@ export async function deleteFeature(id: string): Promise<boolean> {
   revalidatePath('/risks');
   revalidatePath('/findings');
   revalidatePath('/');
+  revalidatePath('/', 'layout');
   return result;
 }

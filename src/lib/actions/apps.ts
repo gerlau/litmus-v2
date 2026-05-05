@@ -17,6 +17,7 @@ export async function createApp(app: Omit<App, 'id'>): Promise<App> {
   const result = await q.insert({ ...app, id });
   revalidatePath('/apps');
   revalidatePath('/');
+  revalidatePath('/', 'layout');
   return result;
 }
 
@@ -27,6 +28,7 @@ export async function updateApp(
   const result = await q.update(id, changes);
   revalidatePath('/apps');
   revalidatePath('/');
+  revalidatePath('/', 'layout');
   return result;
 }
 
@@ -34,5 +36,6 @@ export async function deleteApp(id: string): Promise<boolean> {
   const result = await q.remove(id);
   revalidatePath('/apps');
   revalidatePath('/');
+  revalidatePath('/', 'layout');
   return result;
 }

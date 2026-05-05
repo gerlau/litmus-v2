@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import Shell from '@/shared/components/Shell';
+import ShellServer from '@/shared/components/ShellServer';
 
 export const metadata: Metadata = {
   title: 'MobSec — Mobile Security Assessment',
@@ -19,7 +19,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body>
-        <Shell>{children}</Shell>
+        <ShellServer>{children}</ShellServer>
       </body>
     </html>
   );

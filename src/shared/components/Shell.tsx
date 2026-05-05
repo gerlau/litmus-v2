@@ -5,13 +5,13 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Icons } from './Icon';
 
-const NAV_ITEMS = [
-  { key: '/', label: 'Dashboard', icon: 'dashboard' as const, section: 'stakeholder' },
-  { key: '/features', label: 'Features', icon: 'features' as const, badge: 6, section: 'practitioner' },
-  { key: '/risks', label: 'Risks', icon: 'risks' as const, badge: 7, section: 'practitioner' },
-  { key: '/apps', label: 'Apps', icon: 'apps' as const, badge: 7, section: 'practitioner' },
-  { key: '/findings', label: 'Findings', icon: 'findings' as const, section: 'practitioner' },
-] as const;
+type NavItem = {
+  key: string;
+  label: string;
+  icon: keyof typeof Icons;
+  badge?: number;
+  section: 'stakeholder' | 'practitioner';
+};
 
 const PAGE_TITLES: Record<string, string> = {
   '/': 'Dashboard',
@@ -21,9 +21,23 @@ const PAGE_TITLES: Record<string, string> = {
   '/findings': 'Findings',
 };
 
-export default function Shell({ children }: { children: React.ReactNode }) {
+export default function Shell({
+  children,
+  badgeCounts,
+}: {
+  children: React.ReactNode;
+  badgeCounts: { features: number; risks: number; apps: number };
+}) {
   const pathname = usePathname();
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
+
+  const NAV_ITEMS: NavItem[] = [
+    { key: '/', label: 'Dashboard', icon: 'dashboard', section: 'stakeholder' },
+    { key: '/features', label: 'Features', icon: 'features', badge: badgeCounts.features, section: 'practitioner' },
+    { key: '/risks', label: 'Risks', icon: 'risks', badge: badgeCounts.risks, section: 'practitioner' },
+    { key: '/apps', label: 'Apps', icon: 'apps', badge: badgeCounts.apps, section: 'practitioner' },
+    { key: '/findings', label: 'Findings', icon: 'findings', section: 'practitioner' },
+  ];
 
   useEffect(() => {
     const stored = localStorage.getItem('mobsec-theme') as 'light' | 'dark' | null;
@@ -102,7 +116,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
 }
 
 interface NavItemProps {
-  item: typeof NAV_ITEMS[number];
+  item: NavItem;
   active: boolean;
 }
 

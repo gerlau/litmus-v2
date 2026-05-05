@@ -75,3 +75,9 @@ export async function remove(id: string): Promise<boolean> {
   const count = await db('features').where({ id }).del();
   return count > 0;
 }
+
+export async function count(): Promise<number> {
+  await init();
+  const rows = await db('features').count('* as count');
+  return Number((rows[0] as { count: string | number }).count);
+}

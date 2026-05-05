@@ -19,6 +19,7 @@ export async function updateRisk(
   const result = await q.update(id, changes);
   revalidatePath('/risks');
   revalidatePath('/');
+  revalidatePath('/', 'layout');
   return result;
 }
 
@@ -27,6 +28,7 @@ export async function deleteRisk(id: string): Promise<boolean> {
   revalidatePath('/risks');
   revalidatePath('/findings');
   revalidatePath('/');
+  revalidatePath('/', 'layout');
   return result;
 }
 
@@ -61,5 +63,6 @@ export async function createRisk(data: {
   const result = await q.insert(risk);
   revalidatePath('/risks');
   revalidatePath('/');
+  revalidatePath('/', 'layout');
   return result;
 }
