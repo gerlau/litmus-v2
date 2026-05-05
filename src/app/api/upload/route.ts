@@ -28,11 +28,12 @@ export async function POST(request: NextRequest) {
 
   const ext = file.name.split('.').pop()?.toLowerCase() ?? 'bin';
   const filename = `${Date.now()}-step_${stepIndex + 1}_img${imageCount + 1}.${ext}`;
-  const uploadDir = path.join(homedir(), '.litmus-v2', 'uploads', context);
+  const mode = process.env.LITMUS_USE_MOCK === 'true' ? 'mock' : 'real';
+  const uploadDir = path.join(homedir(), '.litmus-v2', 'uploads', mode, context);
 
   await mkdir(uploadDir, { recursive: true });
   const bytes = await file.arrayBuffer();
   await writeFile(path.join(uploadDir, filename), Buffer.from(bytes));
 
-  return NextResponse.json({ path: `/api/uploads/${context}/${filename}` });
+  return NextResponse.json({ path: `/api/uploads/${mode}/${context}/${filename}` });
 }
