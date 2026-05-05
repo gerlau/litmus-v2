@@ -75,7 +75,7 @@ export type ObservationItem = RiskStatusItem | EvalItem | DemoTableItem | DemoSt
 
 export interface RiskStatusItem {
   id: 'risk_status';
-  text: 'at-risk' | 'reduced';
+  text: 'at-risk' | 'reduced' | 'unclassified';
 }
 
 export interface EvalItem {
