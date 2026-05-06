@@ -24,8 +24,10 @@ export default function RiskRow({ risk, features, appId, finding, status, onTogg
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
-  const [descMet, setDescMet] = useState<MetValue>(status === 'reduced' ? 'met' : 'not');
-  const [goalMet, setGoalMet] = useState<MetValue>(status === 'reduced' ? 'met' : 'not');
+  const savedDescMet = finding?.observation?.find(o => o.id === 'description_status')?.text === 'met' ? 'met' as const : null;
+  const savedGoalMet  = finding?.observation?.find(o => o.id === 'goal_status')?.text  === 'met' ? 'met' as const : null;
+  const [descMet, setDescMet] = useState<MetValue>(savedDescMet ?? (status === 'reduced' ? 'met' : 'not'));
+  const [goalMet, setGoalMet] = useState<MetValue>(savedGoalMet ?? (status === 'reduced' ? 'met' : 'not'));
   const [desc, setDesc] = useState(risk.description);
   const [goal, setGoal] = useState(risk.goal);
   const [rows, setRows] = useState<DemoRow[]>([

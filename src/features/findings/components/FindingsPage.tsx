@@ -100,7 +100,7 @@ export default function FindingsPage({ apps, features, risks, allFindings }: Pro
             </div>
             {byFeature[fid].map(r => (
               <RiskRow
-                key={r.id}
+                key={`${appId}-${r.id}`}
                 risk={r}
                 features={features}
                 appId={appId}
