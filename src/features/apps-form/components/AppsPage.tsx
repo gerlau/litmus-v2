@@ -17,7 +17,7 @@ interface Props {
 export default function AppsPage({ apps }: Props) {
   const router = useRouter();
   const [appId, setAppId] = useState(apps[0]?.id ?? '');
-  const [isNew, setIsNew] = useState(false);
+  const [isNew, setIsNew] = useState(apps.length === 0);
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'deleting' | 'deleted'>('idle');
 
   const selected = apps.find(a => a.id === appId) ?? apps[0];
@@ -62,7 +62,7 @@ export default function AppsPage({ apps }: Props) {
     setTimeout(() => setStatus('idle'), 2500);
   }
 
-  if (!selected) return null;
+  if (!selected && !isNew) return null;
 
   return (
     <div>
@@ -75,7 +75,7 @@ export default function AppsPage({ apps }: Props) {
         <div className="flex flex-col gap-1.5 mb-5">
           <div className="flex items-center justify-between mb-1">
             <label className="text-[12px] font-medium" style={{ color: 'var(--text-2)' }}>Select Application</label>
-            {isNew ? (
+            {isNew && apps.length > 0 ? (
               <button
                 className="text-[12px] font-medium"
                 style={{ color: 'var(--text-2)', background: 'none', border: 'none', cursor: 'pointer' }}
@@ -83,7 +83,7 @@ export default function AppsPage({ apps }: Props) {
               >
                 Cancel
               </button>
-            ) : (
+            ) : !isNew ? (
               <button
                 className="text-[12px] font-medium"
                 style={{ color: 'var(--text-2)', background: 'none', border: 'none', cursor: 'pointer' }}
@@ -91,7 +91,7 @@ export default function AppsPage({ apps }: Props) {
               >
                 + New
               </button>
-            )}
+            ) : null}
           </div>
           {!isNew && (
             <select
@@ -105,6 +105,11 @@ export default function AppsPage({ apps }: Props) {
           )}
         </div>
 
+        {apps.length === 0 && isNew && (
+          <p className="text-[13px] mb-4 mt-0" style={{ color: 'var(--text-3)' }}>
+            No applications yet. Fill in the details below to add your first one.
+          </p>
+        )}
         <h3 className="text-[15px] font-semibold m-0 mb-[18px]" style={{ color: 'var(--text)' }}>Application Details</h3>
 
         <div className="grid grid-cols-2 gap-3.5">
