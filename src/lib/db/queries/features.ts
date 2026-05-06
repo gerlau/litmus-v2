@@ -4,7 +4,6 @@ import type { Feature, DemonstrationItem } from '../../../shared/types/domain';
 interface RawFeatureRow {
   id: string;
   name: string;
-  platform: string;
   description: string;
   additionalContext: string | null;
   demonstration: string;
@@ -16,7 +15,6 @@ function deserialize(row: RawFeatureRow): Feature {
   return {
     id: row.id,
     name: row.name,
-    platform: row.platform,
     description: row.description,
     additionalContext: row.additionalContext ?? undefined,
     demonstration: JSON.parse(row.demonstration) as DemonstrationItem[],
@@ -29,7 +27,6 @@ function serialize(f: Feature): Record<string, unknown> {
   return {
     id: f.id,
     name: f.name,
-    platform: f.platform,
     description: f.description,
     additionalContext: f.additionalContext ?? null,
     demonstration: JSON.stringify(f.demonstration),

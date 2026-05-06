@@ -44,7 +44,6 @@ export default function FeaturesPage({ features }: Props) {
   const [mode, setMode] = useState<'update' | 'add'>('update');
   const [newId, setNewId] = useState('');
   const [newName, setNewName] = useState('');
-  const [newPlatform, setNewPlatform] = useState('');
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'deleting' | 'deleted'>('idle');
 
   function selectFeature(id: string) {
@@ -61,7 +60,6 @@ export default function FeaturesPage({ features }: Props) {
     setMode('add');
     setNewId(nextFeatureId(features));
     setNewName('');
-    setNewPlatform('');
     setDesc('');
     setCtx('');
     setRows([]);
@@ -103,7 +101,6 @@ export default function FeaturesPage({ features }: Props) {
     const created = await createFeature({
       id: newId,
       name: newName,
-      platform: newPlatform,
       description: desc,
       additionalContext: ctx || undefined,
       demonstration: buildDemonstration(),
@@ -192,17 +189,6 @@ export default function FeaturesPage({ features }: Props) {
                 value={newName}
                 onChange={e => setNewName(e.target.value)}
                 placeholder="e.g. Biometric Authentication"
-              />
-            </div>
-            <div className="flex flex-col gap-1.5 mb-3.5">
-              <label className="text-[12px] font-medium" style={{ color: 'var(--text-2)' }}>Platform</label>
-              <input
-                required
-                className="w-full rounded-lg px-3 py-2.5 text-[13.5px] field-input"
-                style={inputStyle}
-                value={newPlatform}
-                onChange={e => setNewPlatform(e.target.value)}
-                placeholder="e.g. iOS / Android"
               />
             </div>
           </>

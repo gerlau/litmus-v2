@@ -1,7 +1,6 @@
 export interface Feature {
   id: string;                      // e.g. "F-001"
   name: string;
-  platform: string;
   description: string;
   additionalContext?: string;
   demonstration: DemonstrationItem[];

@@ -59,7 +59,6 @@ export async function seed(db: Knex): Promise<void> {
     await db('features').insert({
       id: f.id,
       name: f.name,
-      platform: f.platform,
       description: f.desc,
       additionalContext: null,
       demonstration: demo,

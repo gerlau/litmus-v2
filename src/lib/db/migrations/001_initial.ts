@@ -4,7 +4,6 @@ export async function up(knex: Knex): Promise<void> {
   await knex.schema.createTable('features', (table) => {
     table.string('id').primary();
     table.text('name').notNullable();
-    table.text('platform').notNullable();
     table.text('description').notNullable();
     table.text('additionalContext').nullable();
     table.json('demonstration').notNullable();

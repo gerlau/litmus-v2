@@ -96,7 +96,6 @@ export default function FindingsPage({ apps, features, risks, allFindings }: Pro
             <div className="flex items-center gap-2.5 mb-2">
               <span className="font-mono text-[10.5px] font-semibold px-[7px] py-[3px] rounded uppercase" style={{ background: 'var(--surface-3)', color: 'var(--text-3)' }}>{feat.id}</span>
               <h3 className="m-0 text-[14.5px] font-semibold" style={{ color: 'var(--text)' }}>{feat.name}</h3>
-              <span className="text-[10.5px] font-semibold px-2 py-[3px] rounded-full" style={{ background: '#fef3c7', color: '#92400e' }}>{feat.platform}</span>
               <span className="ml-auto text-[12px]" style={{ color: 'var(--text-3)' }}>{byFeature[fid].length} risk{byFeature[fid].length > 1 ? 's' : ''}</span>
             </div>
             {byFeature[fid].map(r => (
