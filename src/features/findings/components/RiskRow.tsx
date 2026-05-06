@@ -33,8 +33,8 @@ export default function RiskRow({ risk, features, appId, finding, status, onTogg
     { k: 'Evidence', v: 'logcat-snippet.txt, charles-session.har' },
   ]);
   const [steps, setSteps] = useState<Step[]>([
-    { text: 'Reproduce on a fresh install with default settings.', file: '' },
-    { text: 'Capture network traffic during the affected flow.', file: '' },
+    { text: 'Reproduce on a fresh install with default settings.', file: '', commands: [] },
+    { text: 'Capture network traffic during the affected flow.', file: '', commands: [] },
   ]);
 
   const featureName = features.find(f => f.id === risk.featureId)?.name ?? '';
@@ -57,7 +57,7 @@ export default function RiskRow({ risk, features, appId, finding, status, onTogg
         id: 'steps',
         type: 'steps' as const,
         label: 'Steps',
-        items: steps.map((s, i) => ({ id: `step_${i + 1}`, text: s.text, images: s.file ? [s.file] : [] })),
+        items: steps.map((s, i) => ({ id: `step_${i + 1}`, text: s.text, images: s.file ? [s.file] : [], commands: s.commands })),
       },
     ];
     await upsertFinding(appId, risk.id, effectiveStatus, observation);

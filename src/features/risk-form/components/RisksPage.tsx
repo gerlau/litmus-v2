@@ -15,7 +15,7 @@ function toRows(risk: Risk): DemoRow[] {
 
 function toSteps(risk: Risk): Step[] {
   const item = risk.demonstration.find(d => d.type === 'steps') as DemoStepsItem | undefined;
-  return item?.items.map(s => ({ text: s.text, file: s.images[0] ?? '' })) ?? [];
+  return item?.items.map(s => ({ text: s.text, file: s.images[0] ?? '', commands: s.commands ?? [] })) ?? [];
 }
 
 const selectCls = 'w-full rounded-lg px-3 py-2.5 text-[13.5px] field-select appearance-none';
@@ -98,7 +98,7 @@ export default function RisksPage({ features, risks }: Props) {
         id: 'steps',
         type: 'steps' as const,
         label: 'Demonstration',
-        items: steps.map((s, i) => ({ id: `step_${i + 1}`, text: s.text, images: s.file ? [s.file] : [] })),
+        items: steps.map((s, i) => ({ id: `step_${i + 1}`, text: s.text, images: s.file ? [s.file] : [], commands: s.commands })),
       },
     ];
   }

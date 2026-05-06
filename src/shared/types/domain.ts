@@ -68,6 +68,7 @@ export interface DemoStepsItem {
     id: string;
     text: string;
     images: string[];
+    commands?: string[];
   }>;
 }
 
@@ -85,4 +86,4 @@ export interface EvalItem {
 }
 
 export interface DemoRow { k: string; v: string; }
-export interface Step { text: string; file: string; }
+export interface Step { text: string; file: string; commands: string[]; }

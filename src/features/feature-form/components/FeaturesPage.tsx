@@ -15,7 +15,7 @@ function toRows(feature: Feature): DemoRow[] {
 
 function toSteps(feature: Feature): Step[] {
   const item = feature.demonstration.find(d => d.type === 'steps') as DemoStepsItem | undefined;
-  return item?.items.map(s => ({ text: s.text, file: s.images[0] ?? '' })) ?? [];
+  return item?.items.map(s => ({ text: s.text, file: s.images[0] ?? '', commands: s.commands ?? [] })) ?? [];
 }
 
 function nextFeatureId(features: Feature[]): string {
@@ -85,7 +85,7 @@ export default function FeaturesPage({ features }: Props) {
         id: 'steps',
         type: 'steps' as const,
         label: 'Demonstration',
-        items: steps.map((s, i) => ({ id: `step_${i + 1}`, text: s.text, images: s.file ? [s.file] : [] })),
+        items: steps.map((s, i) => ({ id: `step_${i + 1}`, text: s.text, images: s.file ? [s.file] : [], commands: s.commands })),
       },
     ];
   }

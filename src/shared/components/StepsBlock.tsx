@@ -33,9 +33,32 @@ function Spinner() {
 
 export default function StepsBlock({ steps, setSteps, context }: StepsBlockProps) {
   const [uploadState, setUploadState] = useState<Record<number, UploadStatus>>({});
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   const updateText = (i: number, text: string) =>
     setSteps(steps.map((s, j) => (j === i ? { ...s, text } : s)));
+
+  const updateCommand = (stepIdx: number, cmdIdx: number, value: string) =>
+    setSteps(steps.map((s, j) =>
+      j === stepIdx
+        ? { ...s, commands: s.commands.map((c, k) => (k === cmdIdx ? value : c)) }
+        : s
+    ));
+
+  const addCommand = (stepIdx: number) =>
+    setSteps(steps.map((s, j) => (j === stepIdx ? { ...s, commands: [...s.commands, ''] } : s)));
+
+  const removeCommand = (stepIdx: number, cmdIdx: number) =>
+    setSteps(steps.map((s, j) =>
+      j === stepIdx ? { ...s, commands: s.commands.filter((_, k) => k !== cmdIdx) } : s
+    ));
+
+  async function copyCommand(stepIdx: number, cmdIdx: number, value: string) {
+    await navigator.clipboard.writeText(value);
+    const key = `${stepIdx}-${cmdIdx}`;
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey(prev => (prev === key ? null : prev)), 1500);
+  }
 
   async function handleFile(i: number, file: File | null) {
     if (!file) return;
@@ -86,6 +109,46 @@ export default function StepsBlock({ steps, setSteps, context }: StepsBlockProps
               value={s.text}
               onChange={e => updateText(i, e.target.value)}
             />
+
+            {/* Commands */}
+            <div className="mt-2.5">
+              <span className="text-[11.5px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-3)' }}>Commands</span>
+              {s.commands.map((cmd, k) => {
+                const isCopied = copiedKey === `${i}-${k}`;
+                return (
+                  <div key={k} className="mt-1.5">
+                    <div className="flex items-center justify-between mb-1">
+                      <button
+                        className="border-0 bg-transparent text-[11px] font-semibold uppercase tracking-wider"
+                        style={{ color: 'var(--danger)' }}
+                        onClick={() => removeCommand(i, k)}
+                      >× Remove</button>
+                      <button
+                        className="rounded px-2 py-0.5 text-[11.5px] font-medium"
+                        style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: isCopied ? 'var(--text-2)' : 'var(--text-3)', cursor: 'pointer' }}
+                        onClick={() => copyCommand(i, k, cmd)}
+                      >{isCopied ? 'Copied!' : 'Copy'}</button>
+                    </div>
+                    <textarea
+                      className="w-full rounded-lg px-3 py-2 text-[12.5px] resize-y"
+                      style={{ minHeight: 48, fontFamily: 'var(--font-mono, monospace)', background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)', lineHeight: 1.55 }}
+                      placeholder="Paste command here…"
+                      value={cmd}
+                      onChange={e => updateCommand(i, k, e.target.value)}
+                    />
+                  </div>
+                );
+              })}
+              <div className="mt-1.5">
+                <button
+                  className="rounded-md px-2.5 py-1.5 text-[12px] font-medium"
+                  style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text-2)' }}
+                  onClick={() => addCommand(i)}
+                >+ Add command</button>
+              </div>
+            </div>
+
+            {/* File attachment */}
             <div className="flex items-center gap-2.5 mt-2 text-[12px]" style={{ color: 'var(--text-3)' }}>
               <label
                 className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[12px]"
@@ -122,7 +185,7 @@ export default function StepsBlock({ steps, setSteps, context }: StepsBlockProps
         <button
           className="rounded-md px-2.5 py-1.5 text-[12px] font-medium"
           style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text-2)' }}
-          onClick={() => setSteps([...steps, { text: '', file: '' }])}
+          onClick={() => setSteps([...steps, { text: '', file: '', commands: [] }])}
         >+ Add step</button>
       </div>
     </div>
