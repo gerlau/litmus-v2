@@ -5,6 +5,7 @@ import type { App, Risk, Finding } from '@/shared/types/domain';
 import { Icons } from '@/shared/components/Icon';
 import RiskList from './RiskList';
 import DivergentChart from './DivergentChart';
+import DailyReading from './DailyReading';
 
 interface Props {
   apps: App[];
@@ -31,7 +32,10 @@ export default function DashboardP2({ apps, risks, findings }: Props) {
         </div>
         <RiskList apps={apps} risks={risks} findings={findings} activeRisk={activeRisk} onSelect={setActiveRisk} />
       </div>
-      <DivergentChart apps={apps} risks={risks} findings={findings} activeRisk={activeRisk} />
+      <div className="flex flex-col gap-4">
+        <DailyReading />
+        <DivergentChart apps={apps} risks={risks} findings={findings} activeRisk={activeRisk} />
+      </div>
     </div>
   );
 }
