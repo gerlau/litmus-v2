@@ -11,6 +11,7 @@ interface Meta {
 interface SummaryResult {
   summary: string;
   summaryFallback?: boolean;
+  ollamaError?: string;
 }
 
 type MetaState = { status: 'loading' } | { status: 'error'; message: string } | { status: 'ok'; data: Meta };
@@ -19,6 +20,7 @@ type SummaryState = { status: 'loading' } | { status: 'done'; data: SummaryResul
 export default function DailyReading() {
   const [meta, setMeta] = useState<MetaState>({ status: 'loading' });
   const [summaryState, setSummaryState] = useState<SummaryState>({ status: 'loading' });
+  const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
     // Phase 1: fetch title + date (scraping only, relatively fast)
@@ -95,26 +97,34 @@ export default function DailyReading() {
         <p className="m-0 text-[12px] italic" style={{ color: 'var(--text-3)' }}>
           Generating summary…
         </p>
+      ) : summaryState.data.summaryFallback ? (
+        <span className="text-[11px]" style={{ color: 'var(--text-3)' }}>
+          AI summary unavailable — {summaryState.data.ollamaError ?? 'Ollama not running'}
+        </span>
       ) : summaryState.data.summary ? (
-        <>
+        <div>
           <p
             className="m-0 text-[12.5px] leading-relaxed"
             style={{
               color: 'var(--text-2)',
-              display: '-webkit-box',
-              WebkitLineClamp: 6,
-              WebkitBoxOrient: 'vertical',
-              overflow: 'hidden',
+              ...(!expanded && {
+                display: '-webkit-box',
+                WebkitLineClamp: 6,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
+              }),
             }}
           >
             {summaryState.data.summary}
           </p>
-          {summaryState.data.summaryFallback && (
-            <span className="text-[10.5px]" style={{ color: 'var(--text-3)' }}>
-              AI summary unavailable — Ollama not running
-            </span>
-          )}
-        </>
+          <button
+            onClick={() => setExpanded((v) => !v)}
+            className="mt-1 text-[11px] font-medium"
+            style={{ color: 'var(--text-3)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+          >
+            {expanded ? 'Show less' : 'Show more'}
+          </button>
+        </div>
       ) : null}
     </div>
   );

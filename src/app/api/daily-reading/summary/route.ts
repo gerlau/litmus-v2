@@ -7,7 +7,7 @@ const OLLAMA_HOST = process.env.OLLAMA_HOST ?? 'http://localhost:11434';
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL ?? 'llama3.2';
 
 // Summary cache separate from meta cache
-const summaryCache = new Map<string, { summary: string; summaryFallback?: boolean }>();
+const summaryCache = new Map<string, { summary: string; summaryFallback?: boolean; ollamaError?: string }>();
 
 export async function GET(request: Request) {
   const bust = new URL(request.url).searchParams.get('bust') === '1';
@@ -26,7 +26,14 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 
-  const prompt = `Summarise the following cybersecurity blog post in 3-4 concise sentences suitable for an executive dashboard. Focus on the key threat, finding, or recommendation.\n\nArticle:\n${body.slice(0, 4000)}`;
+  if (!body) {
+    const result = { summary: "No suitable post found for today's daily read." };
+    summaryCache.set(key, result);
+    return NextResponse.json(result);
+  }
+
+  console.log(body);
+  const prompt = `You are analyzing key sections extracted from a cybersecurity threat intelligence blog post. Write a smooth, storytelling-style paragraph with a maximum length of 700 characters. Clearly explain what platform or technology is targeted (such as Android, iOS — only if explicitly mentioned), who the victims are, and the techniques or methods used by the attackers. Use only information directly stated in the provided content. Do not add assumptions, external context, bullet points, or headings.\n\nContent:\n${body.slice(0, 25000)}`;
 
   try {
     const res = await fetch(`${OLLAMA_HOST}/api/generate`, {
@@ -42,11 +49,14 @@ export async function GET(request: Request) {
     if (!text) throw new Error('Empty Ollama response');
 
     const result = { summary: text };
+    console.log(result);
+    
     summaryCache.set(key, result);
     return NextResponse.json(result);
-  } catch {
-    // Ollama unreachable — serve raw excerpt as fallback
-    const result = { summary: body.slice(0, 400).trim(), summaryFallback: true };
+  } catch (err) {
+    console.error('[summary] Ollama error:', err);
+    const ollamaError = err instanceof Error ? err.message : 'Unknown error';
+    const result = { summary: '', summaryFallback: true, ollamaError };
     summaryCache.set(key, result);
     return NextResponse.json(result);
   }

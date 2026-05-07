@@ -21,6 +21,90 @@ export function getCachedMeta(key: string) {
   return metaCache.get(key) ?? null;
 }
 
+function sectionHtmlAfterHeading(html: string, headingOuterHtml: string): string {
+  const pos = html.indexOf(headingOuterHtml);
+  if (pos === -1) return '';
+  const after = html.slice(pos + headingOuterHtml.length);
+  const cut = after.search(/<h[1-6][\s>]/i);
+  return cut === -1 ? after : after.slice(0, cut);
+}
+
+function cleanText(html: string): string {
+  const el = parse(html);
+  el.querySelectorAll('style,script').forEach((n) => n.remove());
+  return el.text.replace(/\s+/g, ' ').trim();
+}
+
+function extractMitreDescriptions(sectionEl: ReturnType<typeof parse>): string {
+  const descTexts: string[] = [];
+
+  for (const table of sectionEl.querySelectorAll('table')) {
+    // Find Description column index from <th> header cells
+    const headerCells = table.querySelectorAll('th');
+    let descColIndex = -1;
+
+    if (headerCells.length > 0) {
+      headerCells.forEach((th, i) => {
+        if (th.text.trim().toLowerCase() === 'description') descColIndex = i;
+      });
+    }
+
+    if (descColIndex >= 0) {
+      // Column-header table: collect that column from every data row
+      for (const row of table.querySelectorAll('tbody tr, tr')) {
+        const cells = row.querySelectorAll('td');
+        if (cells.length === 0) continue; // skip header rows
+        const cell = cells[descColIndex];
+        if (cell) {
+          const t = cell.text.replace(/\s+/g, ' ').trim();
+          if (t) descTexts.push(t);
+        }
+      }
+    } else {
+      // Row-label table: look for a row whose first cell is "Description"
+      for (const row of table.querySelectorAll('tr')) {
+        const cells = row.querySelectorAll('td');
+        if (cells.length >= 2 && cells[0].text.trim().toLowerCase() === 'description') {
+          const t = cells[1].text.replace(/\s+/g, ' ').trim();
+          if (t) descTexts.push(t);
+        }
+      }
+    }
+  }
+
+  return descTexts.join(' | ');
+}
+
+function extractSections(bodyEl: ReturnType<typeof parse>): string {
+  const html = bodyEl.innerHTML;
+  const parts: string[] = [];
+  const allHeadings = bodyEl.querySelectorAll('h1,h2,h3,h4,h5,h6');
+
+  // --- Executive Summary ---
+  const execH = allHeadings.find((h) =>
+    h.text.replace(/\s+/g, ' ').trim().toLowerCase().includes('executive summary')
+  );
+  if (execH) {
+    const sectionHtml = sectionHtmlAfterHeading(html, execH.outerHTML);
+    const text = cleanText(sectionHtml);
+    if (text) parts.push(`Executive Summary:\n${text}`);
+  }
+
+  // --- MITRE ATT&CK Techniques – Description column ---
+  const mitreH = allHeadings.find((h) => {
+    const t = h.text.toLowerCase();
+    return t.includes('mitre') && (t.includes('att') || t.includes('ck'));
+  });
+  if (mitreH) {
+    const sectionHtml = sectionHtmlAfterHeading(html, mitreH.outerHTML);
+    const sectionEl = parse(sectionHtml);
+    const descriptions = extractMitreDescriptions(sectionEl);
+    if (descriptions) parts.push(`MITRE ATT&CK Techniques – Description:\n${descriptions}`);
+  }
+
+  return parts.join('\n\n');
+}
+
 export async function fetchPostMeta(bust = false): Promise<PostMeta> {
   const key = getCacheKey();
   if (!bust && metaCache.has(key)) return metaCache.get(key)!;
@@ -29,32 +113,44 @@ export async function fetchPostMeta(bust = false): Promise<PostMeta> {
   if (!listingRes.ok) throw new Error(`Listing fetch failed: ${listingRes.status}`);
   const listingDoc = parse(await listingRes.text());
 
-  const postLink = listingDoc
+  const postLinks = listingDoc
     .querySelectorAll('a[href]')
-    .find((a) => POST_SLUG_RE.test(a.getAttribute('href') ?? ''));
+    .filter((a) => POST_SLUG_RE.test(a.getAttribute('href') ?? ''))
+    .slice(0, 10);
 
-  if (!postLink) throw new Error('No post link found on listing page');
+  if (postLinks.length === 0) throw new Error('No post links found on listing page');
 
-  let postHref = postLink.getAttribute('href') ?? '';
-  if (!postHref.startsWith('http')) postHref = `https://zimperium.com${postHref}`;
+  for (const postLink of postLinks) {
+    let postHref = postLink.getAttribute('href') ?? '';
+    if (!postHref.startsWith('http')) postHref = `https://zimperium.com${postHref}`;
 
-  const postRes = await fetch(postHref, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-  if (!postRes.ok) throw new Error(`Post fetch failed: ${postRes.status}`);
-  const postDoc = parse(await postRes.text());
+    const postRes = await fetch(postHref, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+    if (!postRes.ok) continue;
+    const postDoc = parse(await postRes.text());
 
-  const title =
-    postDoc.querySelector('h1.post-header__title span')?.text.trim() ??
-    postDoc.querySelector('h1')?.text.trim() ??
-    'Untitled';
+    const title =
+      postDoc.querySelector('h1.post-header__title span')?.text.trim() ??
+      postDoc.querySelector('h1')?.text.trim() ??
+      'Untitled';
 
-  const date = postDoc.querySelector('div.post-header__date')?.text.trim() ?? '';
+    const date = postDoc.querySelector('div.post-header__date')?.text.trim() ?? '';
 
-  const bodyEl =
-    postDoc.querySelector('#hs_cos_wrapper_post_body') ??
-    postDoc.querySelector('div.s-blog-post__body');
-  const body = bodyEl?.text.replace(/\s+/g, ' ').trim() ?? '';
+    const bodyEl =
+      postDoc.querySelector('#hs_cos_wrapper_post_body') ??
+      postDoc.querySelector('div.s-blog-post__body');
+    bodyEl?.querySelectorAll('style, script').forEach((el) => el.remove());
 
-  const meta: PostMeta = { title, date, url: postHref, body };
+    const body = bodyEl ? extractSections(bodyEl) : '';
+
+    if (body) {
+      const meta: PostMeta = { title, date, url: postHref, body };
+      metaCache.set(key, meta);
+      return meta;
+    }
+  }
+
+  // No post with the required sections found in the first 10
+  const meta: PostMeta = { title: '', date: '', url: '', body: '' };
   metaCache.set(key, meta);
   return meta;
 }
