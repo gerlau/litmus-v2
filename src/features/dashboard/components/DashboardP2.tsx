@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { App, Risk, Finding, Incident } from '@/shared/types/domain';
 import { Icons } from '@/shared/components/Icon';
 import RiskList from './RiskList';
@@ -15,7 +15,24 @@ interface Props {
 }
 
 export default function DashboardP2({ apps, risks, findings, incidents }: Props) {
-  const [activeRisk, setActiveRisk] = useState(risks[0]?.id ?? '');
+  const sortedRisks = useMemo(() => {
+    const lastSeenOf = (riskId: string): number => {
+      const dates = incidents
+        .filter(i => i.risks.some(ir => ir.riskId === riskId))
+        .map(i => new Date(i.postDate).getTime());
+      return dates.length ? Math.max(...dates) : 0;
+    };
+    const atRiskCount = (riskId: string): number =>
+      findings.filter(f => f.riskId === riskId && f.status === 'at-risk').length;
+
+    return [...risks].sort((a, b) => {
+      const lastSeenDiff = lastSeenOf(b.id) - lastSeenOf(a.id);
+      if (lastSeenDiff !== 0) return lastSeenDiff;
+      return atRiskCount(b.id) - atRiskCount(a.id);
+    });
+  }, [risks, findings, incidents]);
+
+  const [activeRisk, setActiveRisk] = useState(() => sortedRisks[0]?.id ?? '');
 
   return (
     <div className="flex flex-col gap-[18px]">
@@ -33,9 +50,9 @@ export default function DashboardP2({ apps, risks, findings, incidents }: Props)
               </button>
             </div>
           </div>
-          <RiskList apps={apps} risks={risks} findings={findings} incidents={incidents} activeRisk={activeRisk} onSelect={setActiveRisk} />
+          <RiskList apps={apps} risks={sortedRisks} findings={findings} incidents={incidents} activeRisk={activeRisk} onSelect={setActiveRisk} />
         </div>
-        <DivergentChart apps={apps} risks={risks} findings={findings} activeRisk={activeRisk} />
+        <DivergentChart apps={apps} risks={sortedRisks} findings={findings} activeRisk={activeRisk} />
       </div>
     </div>
   );
