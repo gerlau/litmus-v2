@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { saveIncident, getIncidentByUrl, deleteIncident } from '@/lib/actions/incidents';
 import type { Incident, IncidentRisk } from '@/shared/types/domain';
 
@@ -32,6 +32,8 @@ export default function DailyReading() {
   const [selectedRisks, setSelectedRisks] = useState<Set<string>>(new Set());
   const [savedIncident, setSavedIncident] = useState<Incident | null>(null);
   const [expanded, setExpanded] = useState(false);
+  const [hasOverflow, setHasOverflow] = useState(false);
+  const summaryRef = useRef<HTMLParagraphElement>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -143,6 +145,12 @@ export default function DailyReading() {
     summaryState.status === 'done' &&
     !summaryState.data.summaryFallback;
 
+  const summary = summaryState.status === 'done' ? summaryState.data.summary : null;
+  useEffect(() => {
+    if (expanded || !summaryRef.current) return;
+    setHasOverflow(summaryRef.current.scrollHeight > summaryRef.current.clientHeight);
+  }, [summary, expanded]);
+
   if (meta.status === 'loading') {
     return (
       <div
@@ -238,6 +246,7 @@ export default function DailyReading() {
       ) : summaryState.data.summary ? (
         <div>
           <p
+            ref={summaryRef}
             className="m-0 text-[12.5px] leading-relaxed"
             style={{
               color: 'var(--text-2)',
@@ -251,13 +260,15 @@ export default function DailyReading() {
           >
             {summaryState.data.summary}
           </p>
-          <button
-            onClick={() => setExpanded((v) => !v)}
-            className="mt-1 text-[11px] font-medium"
-            style={{ color: 'var(--text-3)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-          >
-            {expanded ? 'Show less' : 'Show more'}
-          </button>
+          {(hasOverflow || expanded) && (
+            <button
+              onClick={() => setExpanded((v) => !v)}
+              className="mt-1 text-[11px] font-medium"
+              style={{ color: 'var(--text-3)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+            >
+              {expanded ? 'Show less' : 'Show more'}
+            </button>
+          )}
         </div>
       ) : null}
 
