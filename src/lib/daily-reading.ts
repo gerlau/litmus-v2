@@ -7,8 +7,8 @@ export interface PostMeta {
   body: string;
 }
 
-// Shared in-process cache keyed by ISO date
-const metaCache = new Map<string, PostMeta>();
+// Shared in-process cache keyed by ISO date, stores array of posts
+const metaCache = new Map<string, PostMeta[]>();
 
 const LISTING_URL = 'https://zimperium.com/blog-tag?tag=zlabs';
 const POST_SLUG_RE = /zimperium\.com\/blog\/(?!tag\/)[\w-]+/;
@@ -17,8 +17,9 @@ export function getCacheKey() {
   return new Date().toISOString().slice(0, 10);
 }
 
-export function getCachedMeta(key: string) {
-  return metaCache.get(key) ?? null;
+export function getCachedPostByUrl(key: string, url: string): PostMeta | null {
+  const posts = metaCache.get(key) ?? [];
+  return posts.find((p) => p.url === url) ?? null;
 }
 
 function sectionHtmlAfterHeading(html: string, headingOuterHtml: string): string {
@@ -39,7 +40,6 @@ function extractMitreDescriptions(sectionEl: ReturnType<typeof parse>): string {
   const descTexts: string[] = [];
 
   for (const table of sectionEl.querySelectorAll('table')) {
-    // Find Description column index from <th> header cells
     const headerCells = table.querySelectorAll('th');
     let descColIndex = -1;
 
@@ -50,10 +50,9 @@ function extractMitreDescriptions(sectionEl: ReturnType<typeof parse>): string {
     }
 
     if (descColIndex >= 0) {
-      // Column-header table: collect that column from every data row
       for (const row of table.querySelectorAll('tbody tr, tr')) {
         const cells = row.querySelectorAll('td');
-        if (cells.length === 0) continue; // skip header rows
+        if (cells.length === 0) continue;
         const cell = cells[descColIndex];
         if (cell) {
           const t = cell.text.replace(/\s+/g, ' ').trim();
@@ -61,7 +60,6 @@ function extractMitreDescriptions(sectionEl: ReturnType<typeof parse>): string {
         }
       }
     } else {
-      // Row-label table: look for a row whose first cell is "Description"
       for (const row of table.querySelectorAll('tr')) {
         const cells = row.querySelectorAll('td');
         if (cells.length >= 2 && cells[0].text.trim().toLowerCase() === 'description') {
@@ -80,7 +78,6 @@ function extractSections(bodyEl: ReturnType<typeof parse>): string {
   const parts: string[] = [];
   const allHeadings = bodyEl.querySelectorAll('h1,h2,h3,h4,h5,h6');
 
-  // --- Executive Summary ---
   const execH = allHeadings.find((h) =>
     h.text.replace(/\s+/g, ' ').trim().toLowerCase().includes('executive summary')
   );
@@ -90,7 +87,6 @@ function extractSections(bodyEl: ReturnType<typeof parse>): string {
     if (text) parts.push(`Executive Summary:\n${text}`);
   }
 
-  // --- MITRE ATT&CK Techniques – Description column ---
   const mitreH = allHeadings.find((h) => {
     const t = h.text.toLowerCase();
     return t.includes('mitre') && (t.includes('att') || t.includes('ck'));
@@ -121,7 +117,7 @@ export function matchRiskTitles(
   }).map(({ id, title }) => ({ riskId: id, riskTitle: title }));
 }
 
-export async function fetchPostMeta(bust = false): Promise<PostMeta> {
+export async function fetchPostsMeta(bust = false, limit = 3): Promise<PostMeta[]> {
   const key = getCacheKey();
   if (!bust && metaCache.has(key)) return metaCache.get(key)!;
 
@@ -136,9 +132,16 @@ export async function fetchPostMeta(bust = false): Promise<PostMeta> {
 
   if (postLinks.length === 0) throw new Error('No post links found on listing page');
 
+  const results: PostMeta[] = [];
+
   for (const postLink of postLinks) {
+    if (results.length >= limit) break;
+
     let postHref = postLink.getAttribute('href') ?? '';
     if (!postHref.startsWith('http')) postHref = `https://zimperium.com${postHref}`;
+
+    // Skip duplicates (listing page may repeat links)
+    if (results.some((p) => p.url === postHref)) continue;
 
     const postRes = await fetch(postHref, { headers: { 'User-Agent': 'Mozilla/5.0' } });
     if (!postRes.ok) continue;
@@ -159,14 +162,10 @@ export async function fetchPostMeta(bust = false): Promise<PostMeta> {
     const body = bodyEl ? extractSections(bodyEl) : '';
 
     if (body) {
-      const meta: PostMeta = { title, date, url: postHref, body };
-      metaCache.set(key, meta);
-      return meta;
+      results.push({ title, date, url: postHref, body });
     }
   }
 
-  // No post with the required sections found in the first 10
-  const meta: PostMeta = { title: '', date: '', url: '', body: '' };
-  metaCache.set(key, meta);
-  return meta;
+  metaCache.set(key, results);
+  return results;
 }

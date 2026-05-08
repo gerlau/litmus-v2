@@ -1,26 +1,34 @@
 import { NextResponse } from 'next/server';
-import { fetchPostMeta, getCacheKey } from '@/lib/daily-reading';
+import { fetchPostsMeta, getCacheKey, getCachedPostByUrl } from '@/lib/daily-reading';
 
 export const dynamic = 'force-dynamic';
 
 const OLLAMA_HOST = process.env.OLLAMA_HOST ?? 'http://localhost:11434';
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL ?? 'gemma4';
 
-// Summary cache separate from meta cache
+// Summary cache keyed by post URL
 const summaryCache = new Map<string, { summary: string; summaryFallback?: boolean; ollamaError?: string }>();
 
 export async function GET(request: Request) {
-  const bust = new URL(request.url).searchParams.get('bust') === '1';
+  const { searchParams } = new URL(request.url);
+  const bust = searchParams.get('bust') === '1';
+  const postUrl = searchParams.get('url');
+
   if (bust) summaryCache.clear();
 
-  const key = getCacheKey();
-  const cached = summaryCache.get(key);
+  if (!postUrl) {
+    return NextResponse.json({ error: 'Missing url param' }, { status: 400 });
+  }
+
+  const cached = summaryCache.get(postUrl);
   if (cached) return NextResponse.json(cached);
 
   let body = '';
   try {
-    const meta = await fetchPostMeta(bust);
-    body = meta.body;
+    // Ensure the array cache is populated, then look up by URL
+    await fetchPostsMeta(bust);
+    const post = getCachedPostByUrl(getCacheKey(), postUrl);
+    body = post?.body ?? '';
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Scrape failed';
     return NextResponse.json({ error: message }, { status: 500 });
@@ -28,7 +36,7 @@ export async function GET(request: Request) {
 
   if (!body) {
     const result = { summary: "No suitable post found for today's daily read." };
-    summaryCache.set(key, result);
+    summaryCache.set(postUrl, result);
     return NextResponse.json(result);
   }
 
@@ -50,14 +58,14 @@ export async function GET(request: Request) {
 
     const result = { summary: text };
     console.log(result);
-    
-    summaryCache.set(key, result);
+
+    summaryCache.set(postUrl, result);
     return NextResponse.json(result);
   } catch (err) {
     console.error('[summary] Ollama error:', err);
     const ollamaError = err instanceof Error ? err.message : 'Unknown error';
     const result = { summary: '', summaryFallback: true, ollamaError };
-    summaryCache.set(key, result);
+    summaryCache.set(postUrl, result);
     return NextResponse.json(result);
   }
 }

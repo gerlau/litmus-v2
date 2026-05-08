@@ -21,12 +21,10 @@ interface AndroidRisksResult {
   matchedRisks: IncidentRisk[];
 }
 
-type MetaState = { status: 'loading' } | { status: 'error'; message: string } | { status: 'ok'; data: Meta };
 type SummaryState = { status: 'loading' } | { status: 'done'; data: SummaryResult };
 type AndroidState = { status: 'loading' } | { status: 'done'; data: AndroidRisksResult };
 
-export default function DailyReading() {
-  const [meta, setMeta] = useState<MetaState>({ status: 'loading' });
+function DailyReadingPost({ title, date, url }: Meta) {
   const [summaryState, setSummaryState] = useState<SummaryState>({ status: 'loading' });
   const [androidState, setAndroidState] = useState<AndroidState>({ status: 'loading' });
   const [selectedRisks, setSelectedRisks] = useState<Set<string>>(new Set());
@@ -39,28 +37,16 @@ export default function DailyReading() {
   useEffect(() => {
     const controller = new AbortController();
     const { signal } = controller;
+    const encodedUrl = encodeURIComponent(url);
 
-    fetch('/api/daily-reading', { signal })
-      .then(async (res) => {
-        const json = await res.json();
-        if (!res.ok) throw new Error(json.error ?? 'Failed to load');
-        const data = json as Meta;
-        setMeta({ status: 'ok', data });
+    getIncidentByUrl(url).then((existing) => {
+      if (existing) {
+        setSavedIncident(existing);
+        setSelectedRisks(new Set(existing.risks.map((r) => r.riskId)));
+      }
+    });
 
-        // Check if an incident already exists for this post
-        getIncidentByUrl(data.url).then((existing) => {
-          if (existing) {
-            setSavedIncident(existing);
-            setSelectedRisks(new Set(existing.risks.map((r) => r.riskId)));
-          }
-        });
-      })
-      .catch((err: unknown) => {
-        if ((err as { name?: string }).name === 'AbortError') return;
-        setMeta({ status: 'error', message: err instanceof Error ? err.message : 'Unknown error' });
-      });
-
-    fetch('/api/daily-reading/summary', { signal })
+    fetch(`/api/daily-reading/summary?url=${encodedUrl}`, { signal })
       .then(async (res) => {
         const json = await res.json();
         if (!res.ok) throw new Error(json.error ?? 'Summary failed');
@@ -71,13 +57,12 @@ export default function DailyReading() {
         setSummaryState({ status: 'done', data: { summary: '', summaryFallback: true } });
       });
 
-    fetch('/api/daily-reading/android-risks', { signal })
+    fetch(`/api/daily-reading/android-risks?url=${encodedUrl}`, { signal })
       .then(async (res) => {
         const json = await res.json();
         if (!res.ok) throw new Error(json.error ?? 'Android risks failed');
         const result = json as AndroidRisksResult;
         setAndroidState({ status: 'done', data: result });
-        // Only pre-select matched risks if no saved incident (saved incident controls selection)
         setSavedIncident((prev) => {
           if (!prev) setSelectedRisks(new Set(result.matchedRisks.map((r) => r.riskId)));
           return prev;
@@ -89,10 +74,10 @@ export default function DailyReading() {
       });
 
     return () => controller.abort();
-  }, []);
+  }, [url]);
 
   const toggleRisk = (riskId: string) => {
-    if (savedIncident) return; // locked when saved
+    if (savedIncident) return;
     setSelectedRisks((prev) => {
       const next = new Set(prev);
       if (next.has(riskId)) next.delete(riskId);
@@ -102,18 +87,15 @@ export default function DailyReading() {
   };
 
   const handleThumbsUp = async () => {
-    if (busy || meta.status !== 'ok') return;
+    if (busy) return;
     setBusy(true);
     try {
       if (savedIncident) {
-        // Toggle off — delete the incident
         await deleteIncident(savedIncident.id);
         setSavedIncident(null);
-        // Restore selection to matched risks
         const matchedRisks = androidState.status === 'done' ? androidState.data.matchedRisks : [];
         setSelectedRisks(new Set(matchedRisks.map((r) => r.riskId)));
       } else {
-        // Save new incident
         if (selectedRisks.size === 0) return;
         const matchedRisks = androidState.status === 'done' ? androidState.data.matchedRisks : [];
         const risksToSave = matchedRisks.filter((r) => selectedRisks.has(r.riskId));
@@ -121,7 +103,7 @@ export default function DailyReading() {
           summaryState.status === 'done' && !summaryState.data.summaryFallback
             ? summaryState.data.summary
             : null;
-        const incident = await saveIncident(meta.data.date, meta.data.url, summary, risksToSave);
+        const incident = await saveIncident(date, url, summary, risksToSave);
         setSavedIncident(incident);
       }
     } finally {
@@ -151,42 +133,22 @@ export default function DailyReading() {
     setHasOverflow(summaryRef.current.scrollHeight > summaryRef.current.clientHeight);
   }, [summary, expanded]);
 
-  if (meta.status === 'loading') {
-    return (
-      <div
-        className="rounded-xl p-4 animate-pulse"
-        style={{ background: 'var(--surface)', border: '1px solid var(--border)', minHeight: 130 }}
-      />
-    );
-  }
-
-  if (meta.status === 'error') {
-    return (
-      <div
-        className="rounded-xl p-4 text-[12px]"
-        style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text-3)' }}
-      >
-        Daily reading unavailable
-      </div>
-    );
-  }
-
-  const { title, date, url } = meta.data;
   const matchedRisks = androidState.status === 'done' ? androidState.data.matchedRisks : [];
-
   const thumbsUpOpacity = isSaved ? 1 : selectedRisks.size > 0 ? 1 : 0.4;
   const thumbsUpCursor = busy ? 'wait' : isSaved || selectedRisks.size > 0 ? 'pointer' : 'default';
 
   return (
-    <div
-      className="rounded-xl p-4 flex flex-col gap-2"
-      style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
-    >
-      {/* Header row */}
-      <div className="flex items-center justify-between">
-        <span className="text-[10px] font-semibold tracking-widest uppercase" style={{ color: 'var(--text-3)' }}>
-          Daily Reading
-        </span>
+    <div className="flex flex-col gap-2">
+      <div className="flex items-start justify-between gap-2">
+        <a
+          href={url}
+          target="_blank"
+          rel="noreferrer"
+          className="text-[13px] font-semibold leading-snug hover:underline"
+          style={{ color: 'var(--text)' }}
+        >
+          {title}
+        </a>
 
         {showThumbsUp && (
           <button
@@ -200,6 +162,7 @@ export default function DailyReading() {
               padding: '2px 4px',
               opacity: thumbsUpOpacity,
               transition: 'opacity 0.15s',
+              flexShrink: 0,
             }}
           >
             <svg
@@ -218,16 +181,6 @@ export default function DailyReading() {
           </button>
         )}
       </div>
-
-      <a
-        href={url}
-        target="_blank"
-        rel="noreferrer"
-        className="text-[13px] font-semibold leading-snug hover:underline"
-        style={{ color: 'var(--text)' }}
-      >
-        {title}
-      </a>
 
       {date && (
         <span className="text-[11px]" style={{ color: 'var(--text-3)' }}>
@@ -272,7 +225,6 @@ export default function DailyReading() {
         </div>
       ) : null}
 
-      {/* Risk chips — shown below summary once it loads */}
       {showChips && (
         <div className="flex flex-col gap-1.5 mt-1">
           <span className="text-[10px] font-semibold tracking-widest uppercase" style={{ color: 'var(--text-3)' }}>
@@ -310,6 +262,113 @@ export default function DailyReading() {
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+type PostsState =
+  | { status: 'loading' }
+  | { status: 'error'; message: string }
+  | { status: 'ok'; posts: Meta[] };
+
+export default function DailyReading() {
+  const [postsState, setPostsState] = useState<PostsState>({ status: 'loading' });
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch('/api/daily-reading', { signal: controller.signal })
+      .then(async (res) => {
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error ?? 'Failed to load');
+        setPostsState({ status: 'ok', posts: json.posts as Meta[] });
+      })
+      .catch((err: unknown) => {
+        if ((err as { name?: string }).name === 'AbortError') return;
+        setPostsState({ status: 'error', message: err instanceof Error ? err.message : 'Unknown error' });
+      });
+    return () => controller.abort();
+  }, []);
+
+  if (postsState.status === 'loading') {
+    return (
+      <div
+        className="rounded-xl p-4 animate-pulse"
+        style={{ background: 'var(--surface)', border: '1px solid var(--border)', minHeight: 130 }}
+      />
+    );
+  }
+
+  if (postsState.status === 'error') {
+    return (
+      <div
+        className="rounded-xl p-4 text-[12px]"
+        style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text-3)' }}
+      >
+        Daily reading unavailable
+      </div>
+    );
+  }
+
+  const { posts } = postsState;
+  const total = posts.length;
+  const canPrev = currentIndex > 0;
+  const canNext = currentIndex < total - 1;
+  const activePost = posts[currentIndex];
+
+  const navButtonStyle = (enabled: boolean): React.CSSProperties => ({
+    width: 22,
+    height: 22,
+    borderRadius: '50%',
+    border: '1px solid var(--border)',
+    background: 'none',
+    cursor: enabled ? 'pointer' : 'default',
+    opacity: enabled ? 1 : 0.3,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 0,
+    transition: 'opacity 0.15s',
+    flexShrink: 0,
+  });
+
+  return (
+    <div
+      className="rounded-xl p-4 flex flex-col gap-2"
+      style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
+    >
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] font-semibold tracking-widest uppercase" style={{ color: 'var(--text-3)' }}>
+          Daily Reading
+        </span>
+
+        {total > 1 && (
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setCurrentIndex((i) => Math.max(0, i - 1))}
+              disabled={!canPrev}
+              aria-label="Previous post"
+              style={navButtonStyle(canPrev)}
+            >
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="var(--text-3)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="6.5,2 3.5,5 6.5,8" />
+              </svg>
+            </button>
+            <button
+              onClick={() => setCurrentIndex((i) => Math.min(total - 1, i + 1))}
+              disabled={!canNext}
+              aria-label="Next post"
+              style={navButtonStyle(canNext)}
+            >
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="var(--text-3)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="3.5,2 6.5,5 3.5,8" />
+              </svg>
+            </button>
+          </div>
+        )}
+      </div>
+
+      {activePost && <DailyReadingPost key={activePost.url} {...activePost} />}
     </div>
   );
 }

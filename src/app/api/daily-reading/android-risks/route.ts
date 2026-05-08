@@ -1,12 +1,22 @@
 import { NextResponse } from 'next/server';
-import { fetchPostMeta, isAndroidPost, matchRiskTitles } from '@/lib/daily-reading';
+import { fetchPostsMeta, getCacheKey, getCachedPostByUrl, isAndroidPost, matchRiskTitles } from '@/lib/daily-reading';
 import * as risksQ from '@/lib/db/queries/risks';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request: Request) {
+  const postUrl = new URL(request.url).searchParams.get('url');
+
+  if (!postUrl) {
+    return NextResponse.json({ error: 'Missing url param' }, { status: 400 });
+  }
+
   try {
-    const post = await fetchPostMeta();
+    await fetchPostsMeta();
+    const post = getCachedPostByUrl(getCacheKey(), postUrl);
+    if (!post) {
+      return NextResponse.json({ isAndroid: false, matchedRisks: [] });
+    }
     if (!isAndroidPost(post)) {
       return NextResponse.json({ isAndroid: false, matchedRisks: [] });
     }
