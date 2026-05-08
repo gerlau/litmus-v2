@@ -23,27 +23,32 @@ export default function DailyReading() {
   const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
-    // Phase 1: fetch title + date (scraping only, relatively fast)
-    fetch('/api/daily-reading')
+    const controller = new AbortController();
+    const { signal } = controller;
+
+    fetch('/api/daily-reading', { signal })
       .then(async (res) => {
         const json = await res.json();
         if (!res.ok) throw new Error(json.error ?? 'Failed to load');
         setMeta({ status: 'ok', data: json });
       })
       .catch((err: unknown) => {
+        if ((err as { name?: string }).name === 'AbortError') return;
         setMeta({ status: 'error', message: err instanceof Error ? err.message : 'Unknown error' });
       });
 
-    // Phase 2: fetch Ollama summary (slow — runs in parallel, fills in when ready)
-    fetch('/api/daily-reading/summary')
+    fetch('/api/daily-reading/summary', { signal })
       .then(async (res) => {
         const json = await res.json();
         if (!res.ok) throw new Error(json.error ?? 'Summary failed');
         setSummaryState({ status: 'done', data: json });
       })
-      .catch(() => {
+      .catch((err: unknown) => {
+        if ((err as { name?: string }).name === 'AbortError') return;
         setSummaryState({ status: 'done', data: { summary: '', summaryFallback: true } });
       });
+
+    return () => controller.abort();
   }, []);
 
   if (meta.status === 'loading') {

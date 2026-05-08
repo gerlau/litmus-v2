@@ -4,7 +4,7 @@ import { fetchPostMeta, getCacheKey } from '@/lib/daily-reading';
 export const dynamic = 'force-dynamic';
 
 const OLLAMA_HOST = process.env.OLLAMA_HOST ?? 'http://localhost:11434';
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL ?? 'llama3.2';
+const OLLAMA_MODEL = process.env.OLLAMA_MODEL ?? 'gemma4';
 
 // Summary cache separate from meta cache
 const summaryCache = new Map<string, { summary: string; summaryFallback?: boolean; ollamaError?: string }>();
@@ -40,7 +40,7 @@ export async function GET(request: Request) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ model: OLLAMA_MODEL, prompt, stream: false }),
-      signal: AbortSignal.timeout(60_000),
+      signal: AbortSignal.timeout(120_000),
     });
 
     if (!res.ok) throw new Error(`Ollama returned ${res.status}`);
