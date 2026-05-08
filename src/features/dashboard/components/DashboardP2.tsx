@@ -15,6 +15,8 @@ interface Props {
 }
 
 export default function DashboardP2({ apps, risks, findings, incidents }: Props) {
+  const [sortAsc, setSortAsc] = useState(false);
+
   const sortedRisks = useMemo(() => {
     const lastSeenOf = (riskId: string): number => {
       const dates = incidents
@@ -25,12 +27,13 @@ export default function DashboardP2({ apps, risks, findings, incidents }: Props)
     const atRiskCount = (riskId: string): number =>
       findings.filter(f => f.riskId === riskId && f.status === 'at-risk').length;
 
-    return [...risks].sort((a, b) => {
+    const sorted = [...risks].sort((a, b) => {
       const lastSeenDiff = lastSeenOf(b.id) - lastSeenOf(a.id);
       if (lastSeenDiff !== 0) return lastSeenDiff;
       return atRiskCount(b.id) - atRiskCount(a.id);
     });
-  }, [risks, findings, incidents]);
+    return sortAsc ? sorted.reverse() : sorted;
+  }, [risks, findings, incidents, sortAsc]);
 
   const [activeRisk, setActiveRisk] = useState(() => sortedRisks[0]?.id ?? '');
 
@@ -42,8 +45,8 @@ export default function DashboardP2({ apps, risks, findings, incidents }: Props)
           <div className="flex items-center justify-between mb-3">
             <h3 className="m-0 text-[14.5px] font-semibold" style={{ color: 'var(--text)' }}>Top risks requiring attention</h3>
             <div className="flex gap-2">
-              <button className="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-[12px] font-medium" style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text-2)' }}>
-                Sort: Severity
+              <button onClick={() => setSortAsc(prev => !prev)} className="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-[12px] font-medium" style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text-2)' }}>
+                <span>{sortAsc ? '↑' : '↓'}</span><span>Sort: Severity</span>
               </button>
               <button className="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-[12px] font-semibold" style={{ background: 'var(--ink)', color: '#fff', border: 'none' }}>
                 <Icons.download /> Export Report
