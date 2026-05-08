@@ -105,6 +105,22 @@ function extractSections(bodyEl: ReturnType<typeof parse>): string {
   return parts.join('\n\n');
 }
 
+export function isAndroidPost(post: PostMeta): boolean {
+  const haystack = `${post.title} ${post.body}`.toLowerCase();
+  return haystack.includes('android');
+}
+
+export function matchRiskTitles(
+  postBody: string,
+  risks: Array<{ id: string; title: string }>,
+): Array<{ riskId: string; riskTitle: string }> {
+  const body = postBody.toLowerCase();
+  return risks.filter(({ title }) => {
+    const words = title.split(/\s+/).filter((w) => w.length > 3);
+    return words.some((w) => body.includes(w.toLowerCase()));
+  }).map(({ id, title }) => ({ riskId: id, riskTitle: title }));
+}
+
 export async function fetchPostMeta(bust = false): Promise<PostMeta> {
   const key = getCacheKey();
   if (!bust && metaCache.has(key)) return metaCache.get(key)!;
