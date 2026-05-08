@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { App, Risk, Finding } from '@/shared/types/domain';
+import type { App, Risk, Finding, Incident } from '@/shared/types/domain';
 import { Icons } from '@/shared/components/Icon';
 import RiskList from './RiskList';
 import DivergentChart from './DivergentChart';
@@ -11,9 +11,10 @@ interface Props {
   apps: App[];
   risks: Risk[];
   findings: Finding[];
+  incidents: Incident[];
 }
 
-export default function DashboardP2({ apps, risks, findings }: Props) {
+export default function DashboardP2({ apps, risks, findings, incidents }: Props) {
   const [activeRisk, setActiveRisk] = useState(risks[0]?.id ?? '');
 
   return (
@@ -32,7 +33,7 @@ export default function DashboardP2({ apps, risks, findings }: Props) {
               </button>
             </div>
           </div>
-          <RiskList apps={apps} risks={risks} findings={findings} activeRisk={activeRisk} onSelect={setActiveRisk} />
+          <RiskList apps={apps} risks={risks} findings={findings} incidents={incidents} activeRisk={activeRisk} onSelect={setActiveRisk} />
         </div>
         <DivergentChart apps={apps} risks={risks} findings={findings} activeRisk={activeRisk} />
       </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { App, Feature, Risk, Finding } from '@/shared/types/domain';
+import type { App, Feature, Risk, Finding, Incident } from '@/shared/types/domain';
 import DashboardP1 from './DashboardP1';
 import DashboardP2 from './DashboardP2';
 
@@ -12,9 +12,10 @@ interface Props {
   features: Feature[];
   risks: Risk[];
   findings: Finding[];
+  incidents: Incident[];
 }
 
-export default function DashboardPage({ apps, features, risks, findings }: Props) {
+export default function DashboardPage({ apps, features, risks, findings, incidents }: Props) {
   const [tab, setTab] = useState<Tab>('p1');
 
   return (
@@ -44,7 +45,7 @@ export default function DashboardPage({ apps, features, risks, findings }: Props
       </div>
       {tab === 'p1'
         ? <DashboardP1 apps={apps} features={features} risks={risks} findings={findings} />
-        : <DashboardP2 apps={apps} risks={risks} findings={findings} />
+        : <DashboardP2 apps={apps} risks={risks} findings={findings} incidents={incidents} />
       }
     </div>
   );
