@@ -32,13 +32,13 @@ export async function deleteRisk(id: string): Promise<boolean> {
   return result;
 }
 
-async function nextRiskId(): Promise<string> {
-  const all = await q.getAll();
-  const nums = all
-    .map(r => parseInt(r.id.replace(/^R-/, ''), 10))
+async function nextRiskId(featureId: string): Promise<string> {
+  const forFeature = await q.getByFeatureId(featureId);
+  const nums = forFeature
+    .map(r => { const m = r.id.match(/-R-(\d+)$/); return m ? parseInt(m[1], 10) : NaN; })
     .filter(n => !isNaN(n));
   const next = nums.length > 0 ? Math.max(...nums) + 1 : 1;
-  return `R-${String(next).padStart(3, '0')}`;
+  return `${featureId}-R-${String(next).padStart(3, '0')}`;
 }
 
 export async function createRisk(data: {
@@ -50,7 +50,7 @@ export async function createRisk(data: {
 }): Promise<Risk> {
   const now = new Date();
   const risk: Risk = {
-    id: await nextRiskId(),
+    id: await nextRiskId(data.featureId),
     featureId: data.featureId,
     title: data.title,
     description: data.description,

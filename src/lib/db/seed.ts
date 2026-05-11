@@ -4,13 +4,13 @@ import type { DemonstrationItem, ObservationItem, FindingStatus, CISO } from '..
 import { APPS, FEATURES, RISKS, FINDINGS } from '../../shared/utils/data';
 
 const RISK_GOALS: Record<string, string> = {
-  'R-001': 'Ensure the biometric fallback PIN is rate-limited and bound to the secure enclave.',
-  'R-002': 'Ensure card data is never written to debug logs on any device profile.',
-  'R-003': 'Ensure the encrypted cache is fully invalidated when a user signs out.',
-  'R-004': 'Ensure sensitive content is suppressed from lock-screen notification previews.',
-  'R-005': 'Ensure deep link targets are validated against an allowlist before navigation.',
-  'R-006': 'Ensure all bundled third-party SDKs are current and free of known CVEs.',
-  'R-007': 'Ensure the app detects and responds appropriately to jailbroken or rooted devices.',
+  'F-001-R-001': 'Ensure the biometric fallback PIN is rate-limited and bound to the secure enclave.',
+  'F-002-R-001': 'Ensure card data is never written to debug logs on any device profile.',
+  'F-003-R-001': 'Ensure the encrypted cache is fully invalidated when a user signs out.',
+  'F-004-R-001': 'Ensure sensitive content is suppressed from lock-screen notification previews.',
+  'F-005-R-001': 'Ensure deep link targets are validated against an allowlist before navigation.',
+  'F-006-R-001': 'Ensure all bundled third-party SDKs are current and free of known CVEs.',
+  'F-001-R-002': 'Ensure the app detects and responds appropriately to jailbroken or rooted devices.',
 };
 
 const APP_CISOS: Record<string, CISO> = {

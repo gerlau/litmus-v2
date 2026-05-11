@@ -48,23 +48,23 @@ export const FEATURES: Feature[] = [
 ];
 
 export const RISKS: Risk[] = [
-  { id: 'R-001', featureId: 'F-001', title: 'Weak biometric fallback', block: true, desc: 'Biometric prompt allows fallback to a 4-digit PIN that is not rate-limited and not bound to the secure enclave.' },
-  { id: 'R-002', featureId: 'F-002', title: 'Card data logged in plaintext', block: true, desc: 'PAN and CVV briefly captured in debug logs during checkout flow on certain device profiles.' },
-  { id: 'R-003', featureId: 'F-003', title: 'Cache not cleared on logout', block: false, desc: 'Encrypted cache persists across user sessions and is not invalidated when a user signs out.' },
-  { id: 'R-004', featureId: 'F-004', title: 'Sensitive content in lock-screen notifications', block: false, desc: 'OTP codes and balances appear in notification previews on the lock screen.' },
-  { id: 'R-005', featureId: 'F-005', title: 'Open redirect via deep link', block: true, desc: 'Deep link handler forwards arbitrary URLs to an in-app browser without allowlist checks.' },
-  { id: 'R-006', featureId: 'F-006', title: 'Outdated third-party SDK', block: false, desc: 'Bundled analytics SDK is two major versions behind and has known CVEs published.' },
-  { id: 'R-007', featureId: 'F-001', title: 'No jailbreak/root detection', block: false, desc: 'App runs unrestricted on jailbroken / rooted devices with no warning or attestation.' },
+  { id: 'F-001-R-001', featureId: 'F-001', title: 'Weak biometric fallback', block: true, desc: 'Biometric prompt allows fallback to a 4-digit PIN that is not rate-limited and not bound to the secure enclave.' },
+  { id: 'F-002-R-001', featureId: 'F-002', title: 'Card data logged in plaintext', block: true, desc: 'PAN and CVV briefly captured in debug logs during checkout flow on certain device profiles.' },
+  { id: 'F-003-R-001', featureId: 'F-003', title: 'Cache not cleared on logout', block: false, desc: 'Encrypted cache persists across user sessions and is not invalidated when a user signs out.' },
+  { id: 'F-004-R-001', featureId: 'F-004', title: 'Sensitive content in lock-screen notifications', block: false, desc: 'OTP codes and balances appear in notification previews on the lock screen.' },
+  { id: 'F-005-R-001', featureId: 'F-005', title: 'Open redirect via deep link', block: true, desc: 'Deep link handler forwards arbitrary URLs to an in-app browser without allowlist checks.' },
+  { id: 'F-006-R-001', featureId: 'F-006', title: 'Outdated third-party SDK', block: false, desc: 'Bundled analytics SDK is two major versions behind and has known CVEs published.' },
+  { id: 'F-001-R-002', featureId: 'F-001', title: 'No jailbreak/root detection', block: false, desc: 'App runs unrestricted on jailbroken / rooted devices with no warning or attestation.' },
 ];
 
 export const FINDINGS: FindingsMap = {
-  'A-001': { 'R-001': 'reduced', 'R-002': 'at-risk', 'R-003': 'at-risk', 'R-004': 'reduced', 'R-005': 'at-risk', 'R-006': 'reduced', 'R-007': 'at-risk' },
-  'A-002': { 'R-001': 'at-risk', 'R-002': 'reduced', 'R-003': 'reduced', 'R-004': 'at-risk', 'R-005': 'reduced', 'R-006': 'at-risk', 'R-007': 'reduced' },
-  'A-003': { 'R-001': 'reduced', 'R-002': 'reduced', 'R-003': 'at-risk', 'R-004': 'reduced', 'R-005': 'at-risk', 'R-006': 'reduced', 'R-007': 'reduced' },
-  'A-004': { 'R-001': 'at-risk', 'R-002': 'at-risk', 'R-003': 'at-risk', 'R-004': 'at-risk', 'R-005': 'at-risk', 'R-006': 'reduced', 'R-007': 'reduced' },
-  'A-005': { 'R-001': 'reduced', 'R-002': 'reduced', 'R-003': 'reduced', 'R-004': 'reduced', 'R-005': 'reduced', 'R-006': 'at-risk', 'R-007': 'at-risk' },
-  'A-006': { 'R-001': 'reduced', 'R-002': 'reduced', 'R-003': 'reduced', 'R-004': 'reduced', 'R-005': 'reduced', 'R-006': 'reduced', 'R-007': 'at-risk' },
-  'A-007': { 'R-001': 'reduced', 'R-002': 'at-risk', 'R-003': 'reduced', 'R-004': 'at-risk', 'R-005': 'at-risk', 'R-006': 'reduced', 'R-007': 'reduced' },
+  'A-001': { 'F-001-R-001': 'reduced', 'F-002-R-001': 'at-risk', 'F-003-R-001': 'at-risk', 'F-004-R-001': 'reduced', 'F-005-R-001': 'at-risk', 'F-006-R-001': 'reduced', 'F-001-R-002': 'at-risk' },
+  'A-002': { 'F-001-R-001': 'at-risk', 'F-002-R-001': 'reduced', 'F-003-R-001': 'reduced', 'F-004-R-001': 'at-risk', 'F-005-R-001': 'reduced', 'F-006-R-001': 'at-risk', 'F-001-R-002': 'reduced' },
+  'A-003': { 'F-001-R-001': 'reduced', 'F-002-R-001': 'reduced', 'F-003-R-001': 'at-risk', 'F-004-R-001': 'reduced', 'F-005-R-001': 'at-risk', 'F-006-R-001': 'reduced', 'F-001-R-002': 'reduced' },
+  'A-004': { 'F-001-R-001': 'at-risk', 'F-002-R-001': 'at-risk', 'F-003-R-001': 'at-risk', 'F-004-R-001': 'at-risk', 'F-005-R-001': 'at-risk', 'F-006-R-001': 'reduced', 'F-001-R-002': 'reduced' },
+  'A-005': { 'F-001-R-001': 'reduced', 'F-002-R-001': 'reduced', 'F-003-R-001': 'reduced', 'F-004-R-001': 'reduced', 'F-005-R-001': 'reduced', 'F-006-R-001': 'at-risk', 'F-001-R-002': 'at-risk' },
+  'A-006': { 'F-001-R-001': 'reduced', 'F-002-R-001': 'reduced', 'F-003-R-001': 'reduced', 'F-004-R-001': 'reduced', 'F-005-R-001': 'reduced', 'F-006-R-001': 'reduced', 'F-001-R-002': 'at-risk' },
+  'A-007': { 'F-001-R-001': 'reduced', 'F-002-R-001': 'at-risk', 'F-003-R-001': 'reduced', 'F-004-R-001': 'at-risk', 'F-005-R-001': 'at-risk', 'F-006-R-001': 'reduced', 'F-001-R-002': 'reduced' },
 };
 
 export const SECTORS = ['Financial Services', 'Healthcare', 'Public Sector', 'Logistics', 'Education', 'Retail', 'Telecommunications'];

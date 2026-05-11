@@ -25,9 +25,10 @@ export const db = knex({
 });
 
 const migrationSource = {
-  getMigrations: async (_loadExtensions: readonly string[]) => ['001_initial', '002_incidents'],
+  getMigrations: async (_loadExtensions: readonly string[]) => ['001_initial', '002_incidents', '003_risk_id_format'],
   getMigrationName: (migration: string) => migration,
   getMigration: async (migration: string) => {
+    if (migration === '003_risk_id_format') return import('./migrations/003_risk_id_format');
     if (migration === '002_incidents') return import('./migrations/002_incidents');
     return import('./migrations/001_initial');
   },

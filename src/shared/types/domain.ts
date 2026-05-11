@@ -9,7 +9,7 @@ export interface Feature {
 }
 
 export interface Risk {
-  id: string;                      // e.g. "R-001"
+  id: string;                      // e.g. "F-001-R-001"
   featureId: string;               // FK → features.id, CASCADE DELETE
   title: string;
   description: string;
