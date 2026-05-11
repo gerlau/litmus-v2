@@ -124,8 +124,8 @@ input, textarea, select {
 .bar-fill.highlight { background: linear-gradient(90deg, #ef4444, #b91c1c); }
 
 /* Divergent bars */
-.div-seg-l { background: linear-gradient(90deg, #f87171, #ef4444); }
-.div-seg-r { background: linear-gradient(90deg, #34d399, #10b981); }
+.div-seg-l { background: #ef4444; }
+.div-seg-r { background: #10b981; }
 
 /* Posture bar */
 .posture-bar { background: linear-gradient(90deg, #34d399, #10b981); }

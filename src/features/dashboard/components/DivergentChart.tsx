@@ -75,12 +75,14 @@ export default function DivergentChart({ apps, risks, findings, activeRisk }: Pr
                 <span className="overflow-hidden text-ellipsis whitespace-nowrap">{r.title}</span>
               </div>
               <div className="flex items-center justify-end h-[22px] pr-px">
-                <div className="div-seg-l rounded-l h-full" style={{ width: `${(atRisk / max) * 100}%` }} />
-                <span className="text-[11px] font-semibold ml-1.5" style={{ color: 'var(--danger)' }}>{atRisk}</span>
+                <div className="div-seg-l rounded-l h-full flex items-center justify-center" style={{ width: `${(atRisk / max) * 100}%` }}>
+                  {atRisk > 0 && <span className="text-[11px] font-semibold text-white">{atRisk}</span>}
+                </div>
               </div>
               <div className="flex items-center justify-start h-[22px] pl-px">
-                <span className="text-[11px] font-semibold mr-1.5" style={{ color: 'var(--success)' }}>{reduced}</span>
-                <div className="div-seg-r rounded-r h-full" style={{ width: `${(reduced / max) * 100}%` }} />
+                <div className="div-seg-r rounded-r h-full flex items-center justify-center" style={{ width: `${(reduced / max) * 100}%` }}>
+                  {reduced > 0 && <span className="text-[11px] font-semibold text-white">{reduced}</span>}
+                </div>
               </div>
             </div>
           );
