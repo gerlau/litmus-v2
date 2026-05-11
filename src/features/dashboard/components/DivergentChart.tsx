@@ -71,7 +71,6 @@ export default function DivergentChart({ apps, risks, findings, activeRisk }: Pr
               }}
             >
               <div className="flex items-center gap-2 px-3" style={{ color: isActive ? 'var(--text)' : 'var(--text-3)', fontWeight: isActive ? 500 : 400, fontSize: 13 }}>
-                <span className="font-mono text-[10.5px] font-semibold px-[7px] py-[3px] rounded uppercase" style={{ background: 'var(--surface-3)', color: 'var(--text-3)' }}>{r.id}</span>
                 <span className="overflow-hidden text-ellipsis whitespace-nowrap">{r.title}</span>
               </div>
               <div className="flex items-center justify-end h-[22px] pr-px">
