@@ -43,6 +43,9 @@ export default function AppsBarChart({ apps, risks, findings, selectedApp, onSel
 
   const sorted = [...appsWithStats].sort((a, b) => b.atRisk - a.atRisk);
   const max = Math.max(...appsWithStats.map(a => a.atRisk), 1);
+  const nonZeroRisks = appsWithStats.filter(a => a.atRisk > 0).map(a => a.atRisk);
+  const minAtRisk = nonZeroRisks.length > 0 ? Math.min(...nonZeroRisks) : null;
+  const thresholdPct = minAtRisk !== null ? (minAtRisk / max) * 100 : null;
 
   return (
     <div ref={chartRef} className="rounded-[14px]" style={{ background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}>
@@ -59,7 +62,7 @@ export default function AppsBarChart({ apps, risks, findings, selectedApp, onSel
         </div>
       </div>
       <div className="p-[22px]">
-        {sorted.map(a => {
+        {sorted.map((a, index) => {
           const highlight = selectedApp === a.id;
           return (
             <div
@@ -74,11 +77,20 @@ export default function AppsBarChart({ apps, risks, findings, selectedApp, onSel
               onClick={() => onSelect(a.id)}
             >
               <div className="text-[13px] text-right whitespace-nowrap overflow-hidden text-ellipsis" style={{ color: highlight ? 'var(--text)' : 'var(--text-2)', fontWeight: highlight ? 600 : 400 }}>{a.name}</div>
-              <div className="h-6 rounded-[4px] relative overflow-hidden" style={{ background: 'var(--surface-2)', border: '1px solid var(--border)' }}>
+              <div className="h-6 rounded-[4px] relative" style={{ background: 'var(--surface-2)', border: '1px solid var(--border)' }}>
                 <div
                   className={`bar-fill h-full rounded-[3px] ${highlight ? 'highlight' : ''}`}
                   style={{ width: `${(a.atRisk / max) * 100}%` }}
                 />
+                {thresholdPct !== null && (
+                  <div className="absolute top-0 bottom-0" style={{ left: `${thresholdPct}%`, borderLeft: '1.5px dotted #000' }}>
+                    {index === 0 && (
+                      <div className="absolute" style={{ bottom: '100%', left: '50%', transform: 'translateX(-50%)', fontSize: 9, fontWeight: 600, color: '#000', whiteSpace: 'nowrap', paddingBottom: 2 }}>
+                        Desired
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
               <div className="text-[12px] whitespace-nowrap tabular-nums" style={{ color: 'var(--text-3)' }}>{a.atRisk} / {a.totalRisks}</div>
             </div>
