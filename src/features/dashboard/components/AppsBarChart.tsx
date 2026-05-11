@@ -64,8 +64,13 @@ export default function AppsBarChart({ apps, risks, findings, selectedApp, onSel
           return (
             <div
               key={a.id}
-              className="grid items-center gap-3.5 py-1.5 cursor-pointer"
-              style={{ gridTemplateColumns: '200px 1fr 56px' }}
+              className="grid items-center gap-3.5 cursor-pointer"
+              style={{
+                gridTemplateColumns: '200px 1fr 56px',
+                background: highlight ? 'color-mix(in oklch, var(--accent) 8%, transparent)' : 'transparent',
+                borderRadius: 6,
+                padding: '6px 6px',
+              }}
               onClick={() => onSelect(a.id)}
             >
               <div className="text-[13px] text-right whitespace-nowrap overflow-hidden text-ellipsis" style={{ color: highlight ? 'var(--text)' : 'var(--text-2)', fontWeight: highlight ? 600 : 400 }}>{a.name}</div>

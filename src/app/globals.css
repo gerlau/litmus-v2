@@ -118,10 +118,10 @@ input, textarea, select {
 
 /* Bar fill */
 .bar-fill {
-  background: linear-gradient(90deg, #fecaca, #f87171);
+  background: #ef4444;
   transition: width 0.3s;
 }
-.bar-fill.highlight { background: linear-gradient(90deg, #ef4444, #b91c1c); }
+.bar-fill.highlight { background: #ef4444; }
 
 /* Divergent bars */
 .div-seg-l { background: #ef4444; }
