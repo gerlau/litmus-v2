@@ -43,6 +43,7 @@ async function nextRiskId(featureId: string): Promise<string> {
 
 export async function createRisk(data: {
   featureId: string;
+  mitreAttackMobileTechniqueId: string | null;
   title: string;
   description: string;
   goal: string;
@@ -52,6 +53,7 @@ export async function createRisk(data: {
   const risk: Risk = {
     id: await nextRiskId(data.featureId),
     featureId: data.featureId,
+    mitreAttackMobileTechniqueId: data.mitreAttackMobileTechniqueId,
     title: data.title,
     description: data.description,
     goal: data.goal,

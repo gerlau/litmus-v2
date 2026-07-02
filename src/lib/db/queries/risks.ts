@@ -4,6 +4,7 @@ import type { Risk, DemonstrationItem } from '../../../shared/types/domain';
 interface RawRiskRow {
   id: string;
   featureId: string;
+  mitreAttackMobileTechniqueId: string | null;
   title: string;
   description: string;
   goal: string;
@@ -17,6 +18,7 @@ function deserialize(row: RawRiskRow): Risk {
   return {
     id: row.id,
     featureId: row.featureId,
+    mitreAttackMobileTechniqueId: row.mitreAttackMobileTechniqueId,
     title: row.title,
     description: row.description,
     goal: row.goal,
@@ -31,6 +33,7 @@ function serialize(r: Risk): Record<string, unknown> {
   return {
     id: r.id,
     featureId: r.featureId,
+    mitreAttackMobileTechniqueId: r.mitreAttackMobileTechniqueId,
     title: r.title,
     description: r.description,
     goal: r.goal,
@@ -70,10 +73,11 @@ export async function update(
   changes: Partial<Omit<Risk, 'id' | 'featureId' | 'createdAt'>>,
 ): Promise<Risk | null> {
   await init();
-  const { updatedAt: _u, demonstration, isBlocking, ...rest } = changes;
+  const { updatedAt: _u, demonstration, isBlocking, mitreAttackMobileTechniqueId, ...rest } = changes;
   const patch: Record<string, unknown> = { ...rest, updatedAt: new Date().toISOString() };
   if (demonstration !== undefined) patch.demonstration = JSON.stringify(demonstration);
   if (isBlocking !== undefined) patch.isBlocking = isBlocking ? 1 : 0;
+  if (mitreAttackMobileTechniqueId !== undefined) patch.mitreAttackMobileTechniqueId = mitreAttackMobileTechniqueId;
   const count = await db('risks').where({ id }).update(patch);
   if (count === 0) return null;
   return getById(id);

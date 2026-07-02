@@ -25,9 +25,19 @@ export const db = knex({
 });
 
 const migrationSource = {
-  getMigrations: async (_loadExtensions: readonly string[]) => ['001_initial', '002_incidents', '003_risk_id_format'],
+  getMigrations: async (_loadExtensions: readonly string[]) => [
+    '001_initial',
+    '002_incidents',
+    '003_risk_id_format',
+    '004_mitre_mobile_techniques',
+    '005_risk_mitre_attack_mobile_technique',
+  ],
   getMigrationName: (migration: string) => migration,
   getMigration: async (migration: string) => {
+    if (migration === '005_risk_mitre_attack_mobile_technique') {
+      return import('./migrations/005_risk_mitre_attack_mobile_technique');
+    }
+    if (migration === '004_mitre_mobile_techniques') return import('./migrations/004_mitre_mobile_techniques');
     if (migration === '003_risk_id_format') return import('./migrations/003_risk_id_format');
     if (migration === '002_incidents') return import('./migrations/002_incidents');
     return import('./migrations/001_initial');

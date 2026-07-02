@@ -2,7 +2,15 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import type { Feature, Risk, DemoTableItem, DemoStepsItem, DemoRow, Step } from '@/shared/types/domain';
+import type {
+  Feature,
+  Risk,
+  DemoTableItem,
+  DemoStepsItem,
+  DemoRow,
+  Step,
+  MitreAttackMobileTechnique,
+} from '@/shared/types/domain';
 import { createRisk, updateRisk, deleteRisk } from '@/lib/actions/risks';
 import DemoTable from '@/shared/components/DemoTable';
 import StepsBlock from '@/shared/components/StepsBlock';
@@ -24,11 +32,12 @@ const selectStyle = { background: 'var(--surface)', border: '1px solid var(--bor
 interface Props {
   features: Feature[];
   risks: Risk[];
+  mitreAttackMobileTechniques: MitreAttackMobileTechnique[];
 }
 
 const NEW = '__new__';
 
-export default function RisksPage({ features, risks }: Props) {
+export default function RisksPage({ features, risks, mitreAttackMobileTechniques }: Props) {
   const router = useRouter();
 
   const firstFeature = features[0];
@@ -38,6 +47,9 @@ export default function RisksPage({ features, risks }: Props) {
   const [selectedFeatureId, setSelectedFeatureId] = useState(firstFeature?.id ?? '');
   const [isNew, setIsNew] = useState(!firstRisk);
   const [riskId, setRiskId] = useState(firstRisk?.id ?? '');
+  const [mitreAttackMobileTechniqueId, setMitreAttackMobileTechniqueId] = useState(
+    firstRisk?.mitreAttackMobileTechniqueId ?? '',
+  );
   const [title, setTitle] = useState(firstRisk?.title ?? '');
   const [desc, setDesc] = useState(firstRisk?.description ?? '');
   const [goal, setGoal] = useState(firstRisk?.goal ?? '');
@@ -50,6 +62,7 @@ export default function RisksPage({ features, risks }: Props) {
   function loadRisk(r: Risk) {
     setIsNew(false);
     setRiskId(r.id);
+    setMitreAttackMobileTechniqueId(r.mitreAttackMobileTechniqueId ?? '');
     setTitle(r.title);
     setDesc(r.description);
     setGoal(r.goal);
@@ -60,6 +73,7 @@ export default function RisksPage({ features, risks }: Props) {
   function enterNewMode() {
     setIsNew(true);
     setRiskId('');
+    setMitreAttackMobileTechniqueId('');
     setTitle('');
     setDesc('');
     setGoal('');
@@ -107,11 +121,25 @@ export default function RisksPage({ features, risks }: Props) {
     setStatus('saving');
     const demonstration = buildDemonstration();
     if (isNew) {
-      const created = await createRisk({ featureId: selectedFeatureId, title, description: desc, goal, demonstration });
+      const created = await createRisk({
+        featureId: selectedFeatureId,
+        mitreAttackMobileTechniqueId: mitreAttackMobileTechniqueId || null,
+        title,
+        description: desc,
+        goal,
+        demonstration,
+      });
       setIsNew(false);
       setRiskId(created.id);
+      setMitreAttackMobileTechniqueId(created.mitreAttackMobileTechniqueId ?? '');
     } else {
-      await updateRisk(riskId, { title, description: desc, goal, demonstration });
+      await updateRisk(riskId, {
+        mitreAttackMobileTechniqueId: mitreAttackMobileTechniqueId || null,
+        title,
+        description: desc,
+        goal,
+        demonstration,
+      });
     }
     router.refresh();
     setStatus('saved');
@@ -154,6 +182,21 @@ export default function RisksPage({ features, risks }: Props) {
           <select className={selectCls} style={selectStyle} value={isNew ? NEW : riskId} onChange={e => selectRiskOrNew(e.target.value)}>
             <option value={NEW}>— New Risk —</option>
             {featureRisks.map(r => <option key={r.id} value={r.id}>{r.id} — {r.title}</option>)}
+          </select>
+        </div>
+
+        <div className="flex flex-col gap-1.5 mb-3.5">
+          <label className="text-[12px] font-medium" style={{ color: 'var(--text-2)' }}>Mitre Attack Mobile technique</label>
+          <select
+            className={selectCls}
+            style={selectStyle}
+            value={mitreAttackMobileTechniqueId}
+            onChange={e => setMitreAttackMobileTechniqueId(e.target.value)}
+          >
+            <option value="">— No technique mapping —</option>
+            {mitreAttackMobileTechniques.map(t => (
+              <option key={t.id} value={t.id}>{t.id} - {t.name}</option>
+            ))}
           </select>
         </div>
 

@@ -11,6 +11,7 @@ export interface Feature {
 export interface Risk {
   id: string;                      // e.g. "F-001-R-001"
   featureId: string;               // FK → features.id, CASCADE DELETE
+  mitreAttackMobileTechniqueId: string | null;
   title: string;
   description: string;
   goal: string;
@@ -99,4 +100,10 @@ export interface Incident {
   summary: string | null;
   risks: IncidentRisk[];
   createdAt: Date;
+}
+
+export interface MitreAttackMobileTechnique {
+  id: string;
+  name: string;
+  description: string;
 }
