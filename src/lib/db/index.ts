@@ -31,9 +31,13 @@ const migrationSource = {
     '003_risk_id_format',
     '004_mitre_mobile_techniques',
     '005_risk_mitre_attack_mobile_technique',
+    '006_risk_last_seen',
   ],
   getMigrationName: (migration: string) => migration,
   getMigration: async (migration: string) => {
+    if (migration === '006_risk_last_seen') {
+      return import('./migrations/006_risk_last_seen');
+    }
     if (migration === '005_risk_mitre_attack_mobile_technique') {
       return import('./migrations/005_risk_mitre_attack_mobile_technique');
     }

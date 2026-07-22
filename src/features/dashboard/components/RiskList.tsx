@@ -28,12 +28,6 @@ export default function RiskList({ apps, risks, findings, incidents, activeRisk,
         const total = atRisk + reduced;
         const reducedPct = total ? Math.round((reduced / total) * 100) : 0;
         const isActive = activeRisk === r.id;
-        const lastSeen = incidents
-          .filter(i => i.risks.some(ir => ir.riskId === r.id))
-          .map(i => i.postDate)
-          .sort()
-          .at(-1) ?? null;
-
         return (
           <div
             key={r.id}
@@ -50,9 +44,23 @@ export default function RiskList({ apps, risks, findings, incidents, activeRisk,
               <span className="flex-1 text-[14px] font-semibold" style={{ color: 'var(--text)' }}>{r.title}</span>
             </div>
             <p className="text-[13px] m-0 leading-snug" style={{ color: 'var(--text-2)' }}>{r.description}</p>
-            {lastSeen && (
+            {r.lastSeenAt && (
               <p className="text-[11.5px] mt-1.5 m-0" style={{ color: 'var(--text-3)' }}>
-                Last seen: {new Date(lastSeen).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                Last seen:{' '}
+                {r.lastSeenUrl ? (
+                  <a
+                    href={r.lastSeenUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="hover:underline"
+                    style={{ color: 'inherit' }}
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    {new Date(r.lastSeenAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                  </a>
+                ) : (
+                  new Date(r.lastSeenAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+                )}
               </p>
             )}
             <div className="flex items-center gap-2.5 mt-3 pt-2.5 text-[12px]" style={{ borderTop: '1px solid var(--border)', color: 'var(--text-3)' }}>

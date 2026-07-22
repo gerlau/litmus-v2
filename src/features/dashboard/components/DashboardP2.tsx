@@ -18,22 +18,17 @@ export default function DashboardP2({ apps, risks, findings, incidents }: Props)
   const [sortAsc, setSortAsc] = useState(false);
 
   const sortedRisks = useMemo(() => {
-    const lastSeenOf = (riskId: string): number => {
-      const dates = incidents
-        .filter(i => i.risks.some(ir => ir.riskId === riskId))
-        .map(i => new Date(i.postDate).getTime());
-      return dates.length ? Math.max(...dates) : 0;
-    };
     const atRiskCount = (riskId: string): number =>
       findings.filter(f => f.riskId === riskId && f.status === 'at-risk').length;
 
     const sorted = [...risks].sort((a, b) => {
-      const lastSeenDiff = lastSeenOf(b.id) - lastSeenOf(a.id);
+      const lastSeenDiff =
+        new Date(b.lastSeenAt ?? 0).getTime() - new Date(a.lastSeenAt ?? 0).getTime();
       if (lastSeenDiff !== 0) return lastSeenDiff;
       return atRiskCount(b.id) - atRiskCount(a.id);
     });
     return sortAsc ? sorted.reverse() : sorted;
-  }, [risks, findings, incidents, sortAsc]);
+  }, [risks, findings, sortAsc]);
 
   const [activeRisk, setActiveRisk] = useState(() => sortedRisks[0]?.id ?? '');
 

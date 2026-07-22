@@ -12,6 +12,8 @@ export interface Risk {
   id: string;                      // e.g. "F-001-R-001"
   featureId: string;               // FK → features.id, CASCADE DELETE
   mitreAttackMobileTechniqueId: string | null;
+  lastSeenAt: string | null;
+  lastSeenUrl: string | null;
   title: string;
   description: string;
   goal: string;
