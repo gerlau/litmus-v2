@@ -1,17 +1,16 @@
 'use client';
 
-import type { App, Risk, Finding, Incident } from '@/shared/types/domain';
+import type { App, Risk, Finding } from '@/shared/types/domain';
 
 interface Props {
   apps: App[];
   risks: Risk[];
   findings: Finding[];
-  incidents: Incident[];
   activeRisk: string;
   onSelect: (id: string) => void;
 }
 
-export default function RiskList({ apps, risks, findings, incidents, activeRisk, onSelect }: Props) {
+export default function RiskList({ apps, risks, findings, activeRisk, onSelect }: Props) {
   return (
     <div>
       {risks.map(r => {

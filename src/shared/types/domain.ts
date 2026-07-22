@@ -90,20 +90,6 @@ export interface EvalItem {
 export interface DemoRow { k: string; v: string; }
 export interface Step { text: string; file: string; commands: string[]; }
 
-export interface IncidentRisk {
-  riskId: string;
-  riskTitle: string;
-}
-
-export interface Incident {
-  id: string;
-  postDate: string;
-  postUrl: string;
-  summary: string | null;
-  risks: IncidentRisk[];
-  createdAt: Date;
-}
-
 export interface MitreAttackMobileTechnique {
   id: string;
   name: string;

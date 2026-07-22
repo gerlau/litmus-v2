@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import type { App, Risk, Finding, Incident } from '@/shared/types/domain';
+import type { App, Risk, Finding } from '@/shared/types/domain';
 import { Icons } from '@/shared/components/Icon';
 import RiskList from './RiskList';
 import DivergentChart from './DivergentChart';
@@ -11,10 +11,9 @@ interface Props {
   apps: App[];
   risks: Risk[];
   findings: Finding[];
-  incidents: Incident[];
 }
 
-export default function DashboardP2({ apps, risks, findings, incidents }: Props) {
+export default function DashboardP2({ apps, risks, findings }: Props) {
   const [sortAsc, setSortAsc] = useState(false);
 
   const sortedRisks = useMemo(() => {
@@ -48,7 +47,7 @@ export default function DashboardP2({ apps, risks, findings, incidents }: Props)
               </button>
             </div>
           </div>
-          <RiskList apps={apps} risks={sortedRisks} findings={findings} incidents={incidents} activeRisk={activeRisk} onSelect={setActiveRisk} />
+          <RiskList apps={apps} risks={sortedRisks} findings={findings} activeRisk={activeRisk} onSelect={setActiveRisk} />
         </div>
         <DivergentChart apps={apps} risks={sortedRisks} findings={findings} activeRisk={activeRisk} />
       </div>
