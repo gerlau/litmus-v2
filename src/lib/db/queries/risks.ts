@@ -5,6 +5,8 @@ interface RawRiskRow {
   id: string;
   featureId: string;
   mitreAttackMobileTechniqueId: string | null;
+  lastSeenAt: string | null;
+  lastSeenUrl: string | null;
   title: string;
   description: string;
   goal: string;
@@ -19,6 +21,8 @@ function deserialize(row: RawRiskRow): Risk {
     id: row.id,
     featureId: row.featureId,
     mitreAttackMobileTechniqueId: row.mitreAttackMobileTechniqueId,
+    lastSeenAt: row.lastSeenAt,
+    lastSeenUrl: row.lastSeenUrl,
     title: row.title,
     description: row.description,
     goal: row.goal,
@@ -34,6 +38,8 @@ function serialize(r: Risk): Record<string, unknown> {
     id: r.id,
     featureId: r.featureId,
     mitreAttackMobileTechniqueId: r.mitreAttackMobileTechniqueId,
+    lastSeenAt: r.lastSeenAt,
+    lastSeenUrl: r.lastSeenUrl,
     title: r.title,
     description: r.description,
     goal: r.goal,
@@ -73,14 +79,61 @@ export async function update(
   changes: Partial<Omit<Risk, 'id' | 'featureId' | 'createdAt'>>,
 ): Promise<Risk | null> {
   await init();
-  const { updatedAt: _u, demonstration, isBlocking, mitreAttackMobileTechniqueId, ...rest } = changes;
+  const {
+    updatedAt: _u,
+    demonstration,
+    isBlocking,
+    mitreAttackMobileTechniqueId,
+    lastSeenAt,
+    lastSeenUrl,
+    ...rest
+  } = changes;
   const patch: Record<string, unknown> = { ...rest, updatedAt: new Date().toISOString() };
   if (demonstration !== undefined) patch.demonstration = JSON.stringify(demonstration);
   if (isBlocking !== undefined) patch.isBlocking = isBlocking ? 1 : 0;
   if (mitreAttackMobileTechniqueId !== undefined) patch.mitreAttackMobileTechniqueId = mitreAttackMobileTechniqueId;
+  if (lastSeenAt !== undefined) patch.lastSeenAt = lastSeenAt;
+  if (lastSeenUrl !== undefined) patch.lastSeenUrl = lastSeenUrl;
   const count = await db('risks').where({ id }).update(patch);
   if (count === 0) return null;
   return getById(id);
+}
+
+function normalizeLastSeenDate(input: string): string | null {
+  const parsed = new Date(input);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return parsed.toISOString().slice(0, 10);
+}
+
+export async function updateLastSeenByMitreTechniqueIds(
+  techniqueIds: string[],
+  postDate: string,
+  postUrl: string,
+): Promise<void> {
+  await init();
+  const uniqueTechniqueIds = Array.from(new Set(techniqueIds.filter(Boolean)));
+  if (uniqueTechniqueIds.length === 0) return;
+
+  const normalizedDate = normalizeLastSeenDate(postDate);
+  if (!normalizedDate) return;
+
+  const rows = await db<RawRiskRow>('risks')
+    .whereIn('mitreAttackMobileTechniqueId', uniqueTechniqueIds)
+    .select('*');
+
+  for (const row of rows) {
+    const currentDate = row.lastSeenAt ?? null;
+    const shouldUpdate = !currentDate || currentDate < normalizedDate;
+    if (!shouldUpdate) continue;
+
+    await db('risks')
+      .where({ id: row.id })
+      .update({
+        lastSeenAt: normalizedDate,
+        lastSeenUrl: postUrl,
+        updatedAt: new Date().toISOString(),
+      });
+  }
 }
 
 export async function remove(id: string): Promise<boolean> {

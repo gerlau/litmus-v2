@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { fetchPostsMeta, getCacheKey, getCachedPostByUrl, isAndroidPost, matchRiskTitles } from '@/lib/daily-reading';
+import { fetchPostsMeta, getCacheKey, getCachedPostByUrl, isAndroidPost, matchRisksByMitreTechniqueIds } from '@/lib/daily-reading';
 import * as risksQ from '@/lib/db/queries/risks';
 
 export const dynamic = 'force-dynamic';
@@ -21,7 +21,15 @@ export async function GET(request: Request) {
       return NextResponse.json({ isAndroid: false, matchedRisks: [] });
     }
     const allRisks = await risksQ.getAll();
-    const matchedRisks = matchRiskTitles(post.body, allRisks.map((r) => ({ id: r.id, title: r.title })));
+    await risksQ.updateLastSeenByMitreTechniqueIds(post.mitreAttackTechniqueIds, post.date, post.url);
+    const matchedRisks = matchRisksByMitreTechniqueIds(
+      post.mitreAttackTechniqueIds,
+      allRisks.map((r) => ({
+        id: r.id,
+        title: r.title,
+        mitreAttackMobileTechniqueId: r.mitreAttackMobileTechniqueId,
+      })),
+    );
     return NextResponse.json({ isAndroid: true, matchedRisks });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';

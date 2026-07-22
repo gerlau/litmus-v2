@@ -41,6 +41,11 @@ Everything you need to run the project locally.
    - `true` — connects to `~/.litmus-v2/data.db` (pre-seeded mock data, good for exploring the app)
    - `false` — connects to `~/.litmus-v2/real.db` (blank database, for real assessments)
 
+   For Daily Reading AI summaries, you can also configure Ollama:
+   - `OLLAMA_HOST` — defaults to `http://localhost:11434`
+   - `OLLAMA_MODEL` — defaults to `llama3.2:latest` for faster summaries
+   - `OLLAMA_SUMMARY_INPUT_MAX_CHARS` — defaults to `8000` to keep prompts small and responsive
+
 4. **Start the development server**
    ```bash
    npm run dev

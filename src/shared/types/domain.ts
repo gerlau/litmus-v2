@@ -12,6 +12,8 @@ export interface Risk {
   id: string;                      // e.g. "F-001-R-001"
   featureId: string;               // FK → features.id, CASCADE DELETE
   mitreAttackMobileTechniqueId: string | null;
+  lastSeenAt: string | null;
+  lastSeenUrl: string | null;
   title: string;
   description: string;
   goal: string;
@@ -87,20 +89,6 @@ export interface EvalItem {
 
 export interface DemoRow { k: string; v: string; }
 export interface Step { text: string; file: string; commands: string[]; }
-
-export interface IncidentRisk {
-  riskId: string;
-  riskTitle: string;
-}
-
-export interface Incident {
-  id: string;
-  postDate: string;
-  postUrl: string;
-  summary: string | null;
-  risks: IncidentRisk[];
-  createdAt: Date;
-}
 
 export interface MitreAttackMobileTechnique {
   id: string;

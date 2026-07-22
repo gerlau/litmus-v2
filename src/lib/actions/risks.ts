@@ -54,6 +54,8 @@ export async function createRisk(data: {
     id: await nextRiskId(data.featureId),
     featureId: data.featureId,
     mitreAttackMobileTechniqueId: data.mitreAttackMobileTechniqueId,
+    lastSeenAt: null,
+    lastSeenUrl: null,
     title: data.title,
     description: data.description,
     goal: data.goal,

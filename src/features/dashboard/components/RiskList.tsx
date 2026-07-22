@@ -1,17 +1,16 @@
 'use client';
 
-import type { App, Risk, Finding, Incident } from '@/shared/types/domain';
+import type { App, Risk, Finding } from '@/shared/types/domain';
 
 interface Props {
   apps: App[];
   risks: Risk[];
   findings: Finding[];
-  incidents: Incident[];
   activeRisk: string;
   onSelect: (id: string) => void;
 }
 
-export default function RiskList({ apps, risks, findings, incidents, activeRisk, onSelect }: Props) {
+export default function RiskList({ apps, risks, findings, activeRisk, onSelect }: Props) {
   return (
     <div>
       {risks.map(r => {
@@ -28,12 +27,6 @@ export default function RiskList({ apps, risks, findings, incidents, activeRisk,
         const total = atRisk + reduced;
         const reducedPct = total ? Math.round((reduced / total) * 100) : 0;
         const isActive = activeRisk === r.id;
-        const lastSeen = incidents
-          .filter(i => i.risks.some(ir => ir.riskId === r.id))
-          .map(i => i.postDate)
-          .sort()
-          .at(-1) ?? null;
-
         return (
           <div
             key={r.id}
@@ -45,16 +38,36 @@ export default function RiskList({ apps, risks, findings, incidents, activeRisk,
             }}
             onClick={() => onSelect(r.id)}
           >
-            <div className="flex items-start gap-3 mb-2.5">
-              <span className="font-mono text-[11px] font-semibold px-2 py-1 rounded" style={{ background: 'var(--surface-3)', color: 'var(--text-3)' }}>{r.id}</span>
-              <span className="flex-1 text-[14px] font-semibold" style={{ color: 'var(--text)' }}>{r.title}</span>
+            <div className="flex items-start justify-between gap-3 mb-2.5">
+              <div className="flex items-start gap-3 min-w-0">
+                <span className="font-mono text-[11px] font-semibold px-2 py-1 rounded" style={{ background: 'var(--surface-3)', color: 'var(--text-3)' }}>{r.id}</span>
+                <span className="flex-1 text-[14px] font-semibold" style={{ color: 'var(--text)' }}>{r.title}</span>
+              </div>
+              {r.lastSeenAt && (
+                <div className="text-right shrink-0">
+                  <div className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'var(--text-3)' }}>
+                    Last seen
+                  </div>
+                  {r.lastSeenUrl ? (
+                    <a
+                      href={r.lastSeenUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[11.5px] hover:underline"
+                      style={{ color: 'var(--text-2)' }}
+                      onClick={(event) => event.stopPropagation()}
+                    >
+                      {new Date(r.lastSeenAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                    </a>
+                  ) : (
+                    <div className="text-[11.5px]" style={{ color: 'var(--text-2)' }}>
+                      {new Date(r.lastSeenAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             <p className="text-[13px] m-0 leading-snug" style={{ color: 'var(--text-2)' }}>{r.description}</p>
-            {lastSeen && (
-              <p className="text-[11.5px] mt-1.5 m-0" style={{ color: 'var(--text-3)' }}>
-                Last seen: {new Date(lastSeen).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
-              </p>
-            )}
             <div className="flex items-center gap-2.5 mt-3 pt-2.5 text-[12px]" style={{ borderTop: '1px solid var(--border)', color: 'var(--text-3)' }}>
               <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: 'var(--danger-soft)', color: 'var(--danger)' }}>{atRisk} at risk</span>
               <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: 'var(--success-soft)', color: 'var(--success)' }}>{reduced} reduced</span>

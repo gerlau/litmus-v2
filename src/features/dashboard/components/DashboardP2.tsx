@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import type { App, Risk, Finding, Incident } from '@/shared/types/domain';
+import type { App, Risk, Finding } from '@/shared/types/domain';
 import { Icons } from '@/shared/components/Icon';
 import RiskList from './RiskList';
 import DivergentChart from './DivergentChart';
@@ -11,29 +11,23 @@ interface Props {
   apps: App[];
   risks: Risk[];
   findings: Finding[];
-  incidents: Incident[];
 }
 
-export default function DashboardP2({ apps, risks, findings, incidents }: Props) {
+export default function DashboardP2({ apps, risks, findings }: Props) {
   const [sortAsc, setSortAsc] = useState(false);
 
   const sortedRisks = useMemo(() => {
-    const lastSeenOf = (riskId: string): number => {
-      const dates = incidents
-        .filter(i => i.risks.some(ir => ir.riskId === riskId))
-        .map(i => new Date(i.postDate).getTime());
-      return dates.length ? Math.max(...dates) : 0;
-    };
     const atRiskCount = (riskId: string): number =>
       findings.filter(f => f.riskId === riskId && f.status === 'at-risk').length;
 
     const sorted = [...risks].sort((a, b) => {
-      const lastSeenDiff = lastSeenOf(b.id) - lastSeenOf(a.id);
+      const lastSeenDiff =
+        new Date(b.lastSeenAt ?? 0).getTime() - new Date(a.lastSeenAt ?? 0).getTime();
       if (lastSeenDiff !== 0) return lastSeenDiff;
       return atRiskCount(b.id) - atRiskCount(a.id);
     });
     return sortAsc ? sorted.reverse() : sorted;
-  }, [risks, findings, incidents, sortAsc]);
+  }, [risks, findings, sortAsc]);
 
   const [activeRisk, setActiveRisk] = useState(() => sortedRisks[0]?.id ?? '');
 
@@ -53,7 +47,7 @@ export default function DashboardP2({ apps, risks, findings, incidents }: Props)
               </button>
             </div>
           </div>
-          <RiskList apps={apps} risks={sortedRisks} findings={findings} incidents={incidents} activeRisk={activeRisk} onSelect={setActiveRisk} />
+          <RiskList apps={apps} risks={sortedRisks} findings={findings} activeRisk={activeRisk} onSelect={setActiveRisk} />
         </div>
         <DivergentChart apps={apps} risks={sortedRisks} findings={findings} activeRisk={activeRisk} />
       </div>

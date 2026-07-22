@@ -5,6 +5,7 @@ export interface PostMeta {
   date: string;
   url: string;
   body: string;
+  mitreAttackTechniqueIds: string[];
 }
 
 // Shared in-process cache keyed by ISO date, stores array of posts
@@ -73,7 +74,43 @@ function extractMitreDescriptions(sectionEl: ReturnType<typeof parse>): string {
   return descTexts.join(' | ');
 }
 
-function extractSections(bodyEl: ReturnType<typeof parse>): string {
+function normalizeHeader(text: string): string {
+  return text.replace(/\s+/g, ' ').trim().toLowerCase();
+}
+
+function extractMitreTechniqueIds(sectionEl: ReturnType<typeof parse>): string[] {
+  const ids = new Set<string>();
+
+  for (const table of sectionEl.querySelectorAll('table')) {
+    const rows = table.querySelectorAll('tr');
+    if (rows.length === 0) continue;
+
+    const headerRow = rows.find((row) => row.querySelectorAll('th').length > 0) ?? rows[0];
+    const headerCells = headerRow.querySelectorAll('th,td').map((cell) => normalizeHeader(cell.text));
+    const idColumnIndex = headerCells.findIndex((header) => header === 'id');
+    const hasExpectedShape =
+      idColumnIndex >= 0 &&
+      headerCells.includes('tactic') &&
+      headerCells.includes('name') &&
+      headerCells.includes('description');
+
+    if (!hasExpectedShape) continue;
+
+    for (const row of rows.slice(rows.indexOf(headerRow) + 1)) {
+      const cells = row.querySelectorAll('td');
+      if (cells.length <= idColumnIndex) continue;
+      const id = cells[idColumnIndex].text.replace(/\s+/g, ' ').trim().toUpperCase();
+      if (id) ids.add(id);
+    }
+  }
+
+  return Array.from(ids);
+}
+
+function extractSections(bodyEl: ReturnType<typeof parse>): {
+  text: string;
+  mitreAttackTechniqueIds: string[];
+} {
   const html = bodyEl.innerHTML;
   const parts: string[] = [];
   const allHeadings = bodyEl.querySelectorAll('h1,h2,h3,h4,h5,h6');
@@ -87,18 +124,20 @@ function extractSections(bodyEl: ReturnType<typeof parse>): string {
     if (text) parts.push(`Executive Summary:\n${text}`);
   }
 
-  const mitreH = allHeadings.find((h) => {
-    const t = h.text.toLowerCase();
-    return t.includes('mitre') && (t.includes('att') || t.includes('ck'));
-  });
+  const mitreH = allHeadings.find((h) => normalizeHeader(h.text) === 'mitre att&ck techniques');
+  let mitreAttackTechniqueIds: string[] = [];
   if (mitreH) {
     const sectionHtml = sectionHtmlAfterHeading(html, mitreH.outerHTML);
     const sectionEl = parse(sectionHtml);
+    mitreAttackTechniqueIds = extractMitreTechniqueIds(sectionEl);
     const descriptions = extractMitreDescriptions(sectionEl);
     if (descriptions) parts.push(`MITRE ATT&CK Techniques – Description:\n${descriptions}`);
   }
 
-  return parts.join('\n\n');
+  return {
+    text: parts.join('\n\n'),
+    mitreAttackTechniqueIds,
+  };
 }
 
 export function isAndroidPost(post: PostMeta): boolean {
@@ -106,15 +145,16 @@ export function isAndroidPost(post: PostMeta): boolean {
   return haystack.includes('android');
 }
 
-export function matchRiskTitles(
-  postBody: string,
-  risks: Array<{ id: string; title: string }>,
+export function matchRisksByMitreTechniqueIds(
+  techniqueIds: string[],
+  risks: Array<{ id: string; title: string; mitreAttackMobileTechniqueId: string | null }>,
 ): Array<{ riskId: string; riskTitle: string }> {
-  const body = postBody.toLowerCase();
-  return risks.filter(({ title }) => {
-    const words = title.split(/\s+/).filter((w) => w.length > 3);
-    return words.some((w) => body.includes(w.toLowerCase()));
-  }).map(({ id, title }) => ({ riskId: id, riskTitle: title }));
+  const ids = new Set(techniqueIds.map((id) => id.toUpperCase()));
+  return risks
+    .filter(({ mitreAttackMobileTechniqueId }) =>
+      mitreAttackMobileTechniqueId ? ids.has(mitreAttackMobileTechniqueId.toUpperCase()) : false,
+    )
+    .map(({ id, title }) => ({ riskId: id, riskTitle: title }));
 }
 
 export async function fetchPostsMeta(bust = false, limit = 3): Promise<PostMeta[]> {
@@ -159,10 +199,12 @@ export async function fetchPostsMeta(bust = false, limit = 3): Promise<PostMeta[
       postDoc.querySelector('div.s-blog-post__body');
     bodyEl?.querySelectorAll('style, script').forEach((el) => el.remove());
 
-    const body = bodyEl ? extractSections(bodyEl) : '';
+    const { text: body, mitreAttackTechniqueIds } = bodyEl
+      ? extractSections(bodyEl)
+      : { text: '', mitreAttackTechniqueIds: [] };
 
-    if (body) {
-      results.push({ title, date, url: postHref, body });
+    if (body || mitreAttackTechniqueIds.length > 0) {
+      results.push({ title, date, url: postHref, body, mitreAttackTechniqueIds });
     }
   }
 
